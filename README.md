@@ -86,7 +86,7 @@ bayeslens_results --h
 ### Run the test example
 We prepared a simple example of a BayesLens run. All outputs of the following commands are saved in:
 ```bash
-cd /BayesLens/EXAMPLES/TEST/RESULTS
+/BayesLens/EXAMPLES/TEST/RESULTS
 ```
 
 Go into the directory containing the test example files:
@@ -122,7 +122,7 @@ The marginalized posterior distribution can be plotted using [corner.py](https:/
 ```bash
 /BayesLens/EXAMPLES/TEST/RESULTS/degeneracy_cluster-scale_halo.pdf
 ```
-Finally we extract 10 random walker positions from the MCMC chains (without the burn-in = 3000 steps). The output file will be used to produce cluster mass maps.
+Finally we extract 10 random walker positions from the MCMC chains (without the burn-in = 3000 steps). The output file will be used to produce cluster mass maps (bayeslens_maps is parallelized).
 ```bash
 bayeslens_results rw inputs_test.dat BayesLens.h5 --resume support/chains_burnin_3000.npy --val 10
 
