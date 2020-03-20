@@ -136,4 +136,4 @@ bayeslens_maps inputs_test.dat BayesLens_random_10.dat --ramdisk absolute_path_t
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 ## License
-Free license: You are completely free to use abd modify the code.
+Free license: You are completely free to use and modify the code.
