@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+# ==========================================================
+# Author: Pietro Bergamini - pietro.bergamini@phd.unipd.it
+# ==========================================================
+
+
+import numpy as np
+import os
+import argparse
+import multiprocessing as mp
+import subprocess
+from joblib import Parallel, delayed
+
+from util_bayeslens import BayesLens_parser
+from util_lenstool import BayesLens_writer
+from util_results import BayesLens_read_file, maps
+from util_emcee import BayesLens_emcee
+
+
+parser = argparse.ArgumentParser(description='bayeslens_maps')
+
+parser.add_argument('CONFIG_FILE', type=str, help='BayesLens configuration file.')
+parser.add_argument('BK', help='Name of the file with the random chains', nargs=1, default=['BayesLens_random_10.dat'], type=str)
+parser.add_argument('--n_threads', help='Number of threads to be used to compute a series of LensTool maps',nargs=1, default=[mp.cpu_count()], type=int)
+parser.add_argument('--ramdisk', help='Path to the RAM disk used to compute a series of LensTool maps', nargs=1, default=[os.getcwd() + '/'], type=str)
+
+args = parser.parse_args()
+conf = args.CONFIG_FILE
+
+cwd = os.getcwd() + '/'
+
+if not os.path.exists(cwd + 'support'):
+    os.makedirs(cwd + 'support')
+
+# RUN THE LensTool parser
+par_vectors, priors_bounds, translation_vector, lenstool_vector, header, image_file, deprojection_matrix, translation_vector_ex, mag_ex = BayesLens_parser(par_file=conf, dir=cwd)
+
+mask_sr = (np.asarray(translation_vector[:, 0], dtype=float) < 1.) & (np.asarray(translation_vector[:, 0], dtype=float) >= 0.)
+mask_halos = (np.asarray(translation_vector[:, 0], dtype=float) < 2.)
+mask_vdgal = (np.asarray(translation_vector[:, 0], dtype=float) >= 2.) & (np.asarray(translation_vector[:, 0], dtype=float) < 3.)
+mask_gal = (np.asarray(translation_vector[:, 0], dtype=float) >= 3.)
+
+print('Scaling relation free-parameters: ' + str(len(translation_vector[mask_sr])))
+print('Halo and shear free-parameters: '+ str(len(translation_vector[mask_halos])-4))
+print('Measured galaxy free-parameters: ' + str(len(translation_vector[mask_vdgal])))
+print('No-measured galaxy free-parameters: ' + str(len(translation_vector[mask_gal]))+' (from '+ str(translation_vector[mask_gal][0][0])[2:] + ' to ' + str(translation_vector[mask_gal][len(translation_vector[mask_gal])-1][0])[2:]+')\n')
+
+## RUN MAPS ##
+try:
+    best_par_vect = np.loadtxt(cwd + args.BK[0], delimiter='\t', dtype='float')
+    m = input('Type LensTool line to generate the maps (a list of available maps is here https://projets.lam.fr/projects/lenstool/wiki/RunMode#ampli-int1-int2-float-filename): ')
+    if not os.path.exists(cwd + 'maps'):
+        os.makedirs(cwd + 'maps')
+    header = header[:43]+m+header[56:]
+
+    Parallel(n_jobs=int(args.n_threads[0]))(delayed(maps)(best_par_vect[i,1:], cwd+'maps/', translation_vector, priors_bounds, lenstool_vector, header, str(args.ramdisk[0]), deprojection_matrix,translation_vector_ex, mag_ex, len(best_par_vect),i) for i in np.arange(len(best_par_vect)))
+except:
+    print('WARNING: To create an input file for this function use bayeslens_results [rw][config_file][--val n (with n>0)]')

@@ -1,0 +1,71 @@
+#!/usr/bin/env python
+# ==========================================================
+# Author: Pietro Bergamini - pietro.bergamini@phd.unipd.it
+# ==========================================================
+
+
+import numpy as np
+import os
+import argparse
+import multiprocessing as mp
+import subprocess
+from joblib import Parallel, delayed
+
+from util_bayeslens import BayesLens_parser
+from util_lenstool import BayesLens_writer
+from util_results import BayesLens_read_file, maps
+from util_emcee import BayesLens_emcee
+
+
+
+parser = argparse.ArgumentParser(description='bayeslens_results')
+
+parser.add_argument('MODE', type=str, help='rw: read BayesLens.h5 to obtain chains and results. \nlt: Creates lenstool files from BayesLens results (usefull for postprocessing)')
+parser.add_argument('CONFIG_FILE', type=str, help='BayesLens configuration file')
+parser.add_argument('BK', help='In *rw mode: Name of the .h5 file, default *bk=BayesLens.h5. \nIn *lt mode: Name of one of the --val output files (for ex. BayesLens_best.dat)', nargs=1, default=['BayesLens.h5'], type=str)
+parser.add_argument('--wm', help='In *rw mode: Show walker movements for parameters between *arg1 and *arg2.', nargs=2, default=[0,0], type=int)
+parser.add_argument('--val', help='In *rw mode: If 0, BayesLens extracts the MCMC chain step that maximize the total posteriror. \nIf -1, BayesLens saves the modes of distributions for every parameter. \nIf -2, BayesLens saves the medians of the distributions for each parameters. \nIf n > 0, BayesLens saves n randomly extracted MCMC chain steps.', nargs=1, default=[-10], type=int)
+parser.add_argument('--resume', help='In *rw mode: Used this option (followed by the path) to resume the chains from the saved .npy file (faster respec to the use of the .h5 file).', nargs=1, default=['none'], type=str)
+parser.add_argument('--chains', help='In *rw mode: Store MCMC chains in files. If two argumets are given, it saves the chains for parameters between *arg1 and *arg2. \nIf *arg2 = 0, it automatically store the MCMC chains in files.', nargs=2, default=[-1,-1], type=int)
+
+args = parser.parse_args()
+mode = args.MODE
+conf = args.CONFIG_FILE
+
+cwd = os.getcwd() + '/'
+
+if not os.path.exists(cwd + 'support'):
+    os.makedirs(cwd + 'support')
+
+# RUN THE LensTool parser
+par_vectors, priors_bounds, translation_vector, lenstool_vector, header, image_file, deprojection_matrix, translation_vector_ex, mag_ex = BayesLens_parser(par_file=conf, dir=cwd)
+
+mask_sr = (np.asarray(translation_vector[:, 0], dtype=float) < 1.) & (np.asarray(translation_vector[:, 0], dtype=float) >= 0.)
+mask_halos = (np.asarray(translation_vector[:, 0], dtype=float) < 2.)
+mask_vdgal = (np.asarray(translation_vector[:, 0], dtype=float) >= 2.) & (np.asarray(translation_vector[:, 0], dtype=float) < 3.)
+mask_gal = (np.asarray(translation_vector[:, 0], dtype=float) >= 3.)
+
+print('Scaling relation free-parameters: ' + str(len(translation_vector[mask_sr])))
+print('Halo and shear free-parameters: '+ str(len(translation_vector[mask_halos])-4))
+print('Measured galaxy free-parameters: ' + str(len(translation_vector[mask_vdgal])))
+print('No-measured galaxy free-parameters: ' + str(len(translation_vector[mask_gal]))+' (from '+ str(translation_vector[mask_gal][0][0])[2:] + ' to ' + str(translation_vector[mask_gal][len(translation_vector[mask_gal])-1][0])[2:]+')\n')
+
+## RUN MODES ##
+
+# Read the BayesLens results
+if mode == 'rw':
+    bk = (args.BK[0])[:-3]
+    BayesLens_read_file(cwd, translation_vector, args.wm, args.val[0], args.resume[0], args.chains, str(bk))
+
+# Generate LensTool files
+if mode == 'lt':
+    bk = (args.BK[0])[:-4]
+    best_par_vect = np.loadtxt(cwd + str(bk)+'.dat', delimiter='\t', dtype='float')
+
+    try:
+        BayesLens_writer(out_path=cwd + 'out_' + str(bk) + '_', par_vector=best_par_vect[-1,1:], translation_vector=translation_vector,lenstool_vector=lenstool_vector, header=header, priors_bounds=priors_bounds, deprojection_matrix=deprojection_matrix, translation_vector_ex_w=translation_vector_ex, mag_ex_w = mag_ex)
+    except:
+        BayesLens_writer(out_path=cwd + 'out_'+ str(bk) + '_', par_vector=best_par_vect[1:], translation_vector=translation_vector,lenstool_vector=lenstool_vector, header=header, priors_bounds=priors_bounds, deprojection_matrix=deprojection_matrix, translation_vector_ex_w=translation_vector_ex, mag_ex_w = mag_ex)
+
+    print('File saved: out_'+ str(bk) + '_lenstool_in.par')
+    print('File saved: out_' + str(bk) + '_bayes.par')
