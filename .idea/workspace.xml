@@ -3,8 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="f3dd97b2-2c69-416b-9adb-d77bf5e394b1" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/EXAMPLES/PAPER/images_cat.cat" beforeDir="false" afterPath="$PROJECT_DIR$/EXAMPLES/PAPER/images_cat.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/EXAMPLES/PAPER/inputs.dat" beforeDir="false" afterPath="$PROJECT_DIR$/EXAMPLES/PAPER/inputs.dat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CODE/util_emcee.py" beforeDir="false" afterPath="$PROJECT_DIR$/CODE/util_emcee.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -150,7 +149,14 @@
       <option name="project" value="LOCAL" />
       <updated>1584713842440</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="In EXAMPLES/PAPER, name images_cat.cat changed to images_cat.dat&#10;In EXAMPLES/PAPER/inputs.dat changed the obs_arcs file name">
+      <created>1586877588571</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1586877588571</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -160,7 +166,8 @@
     <MESSAGE value="improved the clarity of several commands in bayeslens and bayeslens_results. I tested both these functions" />
     <MESSAGE value="BUGS in bayeslens_maps corrected. README.md updated" />
     <MESSAGE value="README.md updated" />
-    <option name="LAST_COMMIT_MESSAGE" value="README.md updated" />
+    <MESSAGE value="In EXAMPLES/PAPER, name images_cat.cat changed to images_cat.dat&#10;In EXAMPLES/PAPER/inputs.dat changed the obs_arcs file name" />
+    <option name="LAST_COMMIT_MESSAGE" value="In EXAMPLES/PAPER, name images_cat.cat changed to images_cat.dat&#10;In EXAMPLES/PAPER/inputs.dat changed the obs_arcs file name" />
   </component>
   <component name="WindowStateProjectService">
     <state x="320" y="127" key="#Notifications" timestamp="1584700545733">
@@ -175,10 +182,10 @@
       <screen x="0" y="23" width="1440" height="877" />
     </state>
     <state x="439" y="271" key="#com.intellij.fileTypes.FileTypeChooser/0.23.1440.877@0.23.1440.877" timestamp="1584529145623" />
-    <state x="339" y="64" key="CommitChangelistDialog2" timestamp="1584713842295">
+    <state x="339" y="64" key="CommitChangelistDialog2" timestamp="1586877588255">
       <screen x="0" y="23" width="1440" height="877" />
     </state>
-    <state x="339" y="64" key="CommitChangelistDialog2/0.23.1440.877@0.23.1440.877" timestamp="1584713842295" />
+    <state x="339" y="64" key="CommitChangelistDialog2/0.23.1440.877@0.23.1440.877" timestamp="1586877588255" />
     <state x="465" y="179" key="RollbackChangesDialog" timestamp="1584701477970">
       <screen x="0" y="23" width="1440" height="877" />
     </state>
@@ -187,10 +194,10 @@
       <screen x="0" y="23" width="1440" height="877" />
     </state>
     <state x="221" y="100" key="SettingsEditor/0.23.1440.877@0.23.1440.877" timestamp="1584700378011" />
-    <state x="320" y="201" key="Vcs.Push.Dialog.v2" timestamp="1584713855103">
+    <state x="320" y="201" key="Vcs.Push.Dialog.v2" timestamp="1586877613518">
       <screen x="0" y="23" width="1440" height="877" />
     </state>
-    <state x="320" y="201" key="Vcs.Push.Dialog.v2/0.23.1440.877@0.23.1440.877" timestamp="1584713855103" />
+    <state x="320" y="201" key="Vcs.Push.Dialog.v2/0.23.1440.877@0.23.1440.877" timestamp="1586877613518" />
     <state x="397" y="294" key="com.intellij.ide.util.TipDialog" timestamp="1584704245053">
       <screen x="0" y="23" width="1440" height="877" />
     </state>

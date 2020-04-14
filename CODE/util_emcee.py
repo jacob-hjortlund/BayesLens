@@ -12,7 +12,8 @@ from pathlib import Path
 import os
 
 import matplotlib
-matplotlib.use('TkAgg')
+# matplotlib.use('TkAgg')
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 from util_likelihoods_priors import partial_posterior, lnposterior
@@ -236,6 +237,7 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
         print("Mean acceptance fraction: {0:.3f}".format(np.mean(frac_update)))
 
         # plt.plot(frac_update[0:len(frac_update) - 1], frac_update)
+
         plt.clf()
         plt.plot(np.arange(len(frac_update)), frac_update)
         plt.hlines(np.mean(frac_update),0,len(frac_update),linestyles='--')
