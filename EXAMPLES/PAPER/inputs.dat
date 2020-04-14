@@ -1,6 +1,6 @@
 #--- LENSTOOL PARS ----------------------
 REFERENCE: 181.55062 -8.8009361
-MULTFILE: image_cat.dat
+MULTFILE: images_cat.dat
 H0: 70.0
 OMEGA: 0.3
 LAMBDA: 0.7
