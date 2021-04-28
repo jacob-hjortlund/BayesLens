@@ -37,7 +37,7 @@ bayeslens --h
 
 WARNING:
 
-- Before to run BayesLens, use the following command to check if the LensTool input file has the right structure.
+- Before running BayesLens, use the following command to check if the LensTool input file has the right structure.
 
     ```bash
     bayeslens ltpar config_file
@@ -84,7 +84,7 @@ bayeslens_results --h
 ```
 
 ### Run the test example
-We prepared a simple example of a BayesLens run. All outputs of the following commands are saved in:
+We have prepared a simple example of a BayesLens run. All outputs of the following commands are saved in:
 ```bash
 /BayesLens/EXAMPLES/TEST/RESULTS
 ```
