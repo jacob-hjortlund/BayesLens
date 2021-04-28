@@ -1,6 +1,6 @@
 # BayesLens
 
-BayesLens is a purpose-built wrapper that relies on common (external) lensing codes for the galaxy cluster lensing likelihood and samples the posterior on parameters and hyperparameters. BayesLens is design to permit an accurate description of cluster member galaxies into cluster lens models.
+BayesLens is a purpose-built wrapper that relies on common (external) lensing codes for the galaxy cluster lensing likelihood and samples the posterior on parameters and hyperparameters. BayesLens is designed to permit an accurate description of cluster member galaxies in cluster lensing models.
 
 ## Installation
 
