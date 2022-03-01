@@ -10,6 +10,9 @@ import multiprocessing as mp
 import emcee
 from pathlib import Path
 import os
+import sys
+from schwimmbad import MPIPool
+from contextlib import ExitStack
 
 import matplotlib
 # matplotlib.use('TkAgg')
@@ -107,8 +110,16 @@ def run_sampler(n_walkers_r, dim_r, lnposterior_r, priors_bounds_r, working_dir_
     :return: array with results and sampler object
     """
     # START THE SAMPLER
-    print('\nSampler started...')
-    with mp.Pool(n_threads_r) as pool:
+    with ExitStack() as stack:
+        if MPI:
+            pool = stack.enter_context(MPIPool())
+            if not pool.is_master():
+                pool.wait()
+                sys.exit(0)
+        else:
+            pool = stack.enter_context(mp.Pool(n_threads_r))
+
+        print('\nSampler started...')
         sampler = emcee.EnsembleSampler(n_walkers_r, dim_r, lnposterior_r, args=(
         priors_bounds_r, working_dir_r, translation_vector_r, lenstool_vector_r, header_r, image_file_r, ramdisk_r,
         deprojection_matrix_r, translation_vector_ex_r, mag_ex_r), pool=pool, backend=backend_r)
