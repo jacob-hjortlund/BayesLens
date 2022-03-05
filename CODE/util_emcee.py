@@ -191,8 +191,8 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
         print('\nRUN: ' + str(i + 1) + ' of ' + str(mf[0]))
         if i == 0:
 
-            os.makedirs(working_dir + 'acc_frac')
-            os.makedirs(working_dir + 'best_par')
+            os.makedirs(working_dir + 'acc_frac', exist_ok=True)
+            os.makedirs(working_dir + 'best_par', exist_ok=True)
 
             ## CONTINUE A PRECEDING RUN APPENDING THE CHAINS TO THE SAME BayesLens.h5 FILE ##
             if my_file.is_file():
