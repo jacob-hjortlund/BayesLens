@@ -43,6 +43,8 @@ with ExitStack() as stack:
         if not pool.is_master():
             pool.wait()
             sys.exit(0)
+    else:
+        pool = None
 
     if not os.path.exists(cwd + 'support'):
         os.makedirs(cwd + 'support')
@@ -71,5 +73,5 @@ with ExitStack() as stack:
     if mode == 'run':
         BayesLens_emcee(priors_bounds, cwd, translation_vector, lenstool_vector, header,
                             image_file, deprojection_matrix, translation_vector_ex, mag_ex, n_walkers=int(args.n_walkers[0]), n_steps=int(args.n_steps[0]),
-                            n_threads=int(args.n_threads[0]),ramdisk=str(args.ramdisk[0]), bk=str(args.bk[0]), mf=args.mf, pool=pool)
+                            n_threads=int(args.n_threads[0]),ramdisk=str(args.ramdisk[0]), bk=str(args.bk[0]), mf=args.mf, pool=pool, stack=stack)
 
