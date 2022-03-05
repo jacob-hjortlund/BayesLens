@@ -5,9 +5,13 @@
 
 import numpy as np
 import os
+import sys
 import argparse
 import multiprocessing as mp
 import subprocess
+
+from schwimmbad import MPIPool
+from contextlib import ExitStack
 
 from util_bayeslens import BayesLens_parser
 from util_lenstool import BayesLens_writer
@@ -29,35 +33,43 @@ parser.add_argument('--mpi', help='Whether to use OpenMPI or multiprocessing, de
 args = parser.parse_args()
 mode = args.MODE
 conf = args.CONFIG_FILE
+mpi = bool(args.mpi[0])
 
 cwd = os.getcwd() + '/'
 
-if not os.path.exists(cwd + 'support'):
-    os.makedirs(cwd + 'support')
+with ExitStack() as stack:
+    if mpi:
+        pool = stack.enter_context(MPIPool())
+        if not pool.is_master():
+            pool.wait()
+            sys.exit(0)
 
-# RUN THE LensTool parser
-par_vectors, priors_bounds, translation_vector, lenstool_vector, header, image_file, deprojection_matrix, translation_vector_ex, mag_ex = BayesLens_parser(par_file=conf, dir=cwd)
+    if not os.path.exists(cwd + 'support'):
+        os.makedirs(cwd + 'support')
 
-mask_sr = (np.asarray(translation_vector[:, 0], dtype=float) < 1.) & (np.asarray(translation_vector[:, 0], dtype=float) >= 0.)
-mask_halos = (np.asarray(translation_vector[:, 0], dtype=float) < 2.)
-mask_vdgal = (np.asarray(translation_vector[:, 0], dtype=float) >= 2.) & (np.asarray(translation_vector[:, 0], dtype=float) < 3.)
-mask_gal = (np.asarray(translation_vector[:, 0], dtype=float) >= 3.)
+    # RUN THE LensTool parser
+    par_vectors, priors_bounds, translation_vector, lenstool_vector, header, image_file, deprojection_matrix, translation_vector_ex, mag_ex = BayesLens_parser(par_file=conf, dir=cwd)
 
-print('Scaling relation free-parameters: ' + str(len(translation_vector[mask_sr])))
-print('Halo and shear free-parameters: '+ str(len(translation_vector[mask_halos])-4))
-print('Measured galaxy free-parameters: ' + str(len(translation_vector[mask_vdgal])))
-print('No-measured galaxy free-parameters: ' + str(len(translation_vector[mask_gal]))+' (from '+ str(translation_vector[mask_gal][0][0])[2:] + ' to ' + str(translation_vector[mask_gal][len(translation_vector[mask_gal])-1][0])[2:]+')\n')
+    mask_sr = (np.asarray(translation_vector[:, 0], dtype=float) < 1.) & (np.asarray(translation_vector[:, 0], dtype=float) >= 0.)
+    mask_halos = (np.asarray(translation_vector[:, 0], dtype=float) < 2.)
+    mask_vdgal = (np.asarray(translation_vector[:, 0], dtype=float) >= 2.) & (np.asarray(translation_vector[:, 0], dtype=float) < 3.)
+    mask_gal = (np.asarray(translation_vector[:, 0], dtype=float) >= 3.)
 
-## RUN MODES ##
+    print('Scaling relation free-parameters: ' + str(len(translation_vector[mask_sr])))
+    print('Halo and shear free-parameters: '+ str(len(translation_vector[mask_halos])-4))
+    print('Measured galaxy free-parameters: ' + str(len(translation_vector[mask_vdgal])))
+    print('No-measured galaxy free-parameters: ' + str(len(translation_vector[mask_gal]))+' (from '+ str(translation_vector[mask_gal][0][0])[2:] + ' to ' + str(translation_vector[mask_gal][len(translation_vector[mask_gal])-1][0])[2:]+')\n')
 
-# LenstTool par file
-if mode == 'ltpar':
-    BayesLens_writer(out_path=cwd + 'test_', par_vector=par_vectors, translation_vector=translation_vector,lenstool_vector=lenstool_vector, header=header, priors_bounds=priors_bounds, deprojection_matrix=deprojection_matrix, translation_vector_ex_w=translation_vector_ex, mag_ex_w = mag_ex)
-    subprocess.Popen(["cat", cwd + 'test_lenstool_in.par'])
+    ## RUN MODES ##
 
-# Run the sampler
-if mode == 'run':
-    BayesLens_emcee(priors_bounds, cwd, translation_vector, lenstool_vector, header,
-                        image_file, deprojection_matrix, translation_vector_ex, mag_ex, n_walkers=int(args.n_walkers[0]), n_steps=int(args.n_steps[0]),
-                        n_threads=int(args.n_threads[0]),ramdisk=str(args.ramdisk[0]), bk=str(args.bk[0]), mf=args.mf, mpi=bool(args.mpi[0]))
+    # LenstTool par file
+    if mode == 'ltpar':
+        BayesLens_writer(out_path=cwd + 'test_', par_vector=par_vectors, translation_vector=translation_vector,lenstool_vector=lenstool_vector, header=header, priors_bounds=priors_bounds, deprojection_matrix=deprojection_matrix, translation_vector_ex_w=translation_vector_ex, mag_ex_w = mag_ex)
+        subprocess.Popen(["cat", cwd + 'test_lenstool_in.par'])
+
+    # Run the sampler
+    if mode == 'run':
+        BayesLens_emcee(priors_bounds, cwd, translation_vector, lenstool_vector, header,
+                            image_file, deprojection_matrix, translation_vector_ex, mag_ex, n_walkers=int(args.n_walkers[0]), n_steps=int(args.n_steps[0]),
+                            n_threads=int(args.n_threads[0]),ramdisk=str(args.ramdisk[0]), bk=str(args.bk[0]), mf=args.mf, pool=pool)
 
