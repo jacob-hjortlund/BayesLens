@@ -150,7 +150,7 @@ def best_chain(dir_working, bk_c, translation_vector_c, dir_out):
 
 def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vector, header, image_file,
                     deprojection_matrix, translation_vector_ex, mag_ex, n_walkers=100, n_steps=500, n_threads=1,
-                    ramdisk='', bk='BayesLens', mf=[1, 0], mpipool=None, stack=None):
+                    ramdisk='', bk='BayesLens', mf=[1, 0], pool=None, stack=None):
     """
     Run BayesLens optimization
 
@@ -169,7 +169,7 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
     :param ramdisk: path to RAMDISK
     :param bk: name of output BayesLens file
     :param mf: array with two entryes. If mf[0] = N, split BayesLens outputs subsequent N files. If mf[1] = 1, removes previous saved files
-    :param mpipool: MPI Pool to use, defaults to none
+    :param pool: MPI Pool to use, defaults to none
     :param stack: Context manager
     :return: Save results in .h5 files and plot the acceptance fraction.
     """
@@ -200,7 +200,7 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
                 results, sampler_o = run_sampler(n_walkers, dim, lnposterior, priors_bounds, working_dir,
                                                  translation_vector, lenstool_vector, header, image_file, ramdisk,
                                                  deprojection_matrix, n_threads, backend, n_steps,
-                                                 translation_vector_ex, mag_ex, mpipool, stack, pos_r=None)
+                                                 translation_vector_ex, mag_ex, pool, stack, pos_r=None)
 
             ### CREATE A NEW RUN ###
             else:
@@ -222,7 +222,7 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
                 results, sampler_o = run_sampler(n_walkers, dim, lnposterior, priors_bounds, working_dir,
                                                  translation_vector, lenstool_vector, header, image_file, ramdisk,
                                                  deprojection_matrix, n_threads, backend, n_steps,
-                                                 translation_vector_ex, mag_ex, mpipool, stack, pos_r=pos)
+                                                 translation_vector_ex, mag_ex, pool, stack, pos_r=pos)
 
         else:
             if i > 1:
@@ -236,7 +236,7 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
             results, sampler_o = run_sampler(n_walkers, dim, lnposterior, priors_bounds, working_dir,
                                              translation_vector, lenstool_vector, header, image_file, ramdisk,
                                              deprojection_matrix, n_threads, backend, n_steps, translation_vector_ex,
-                                             mag_ex, mpipool, stack, pos_r=results)
+                                             mag_ex, pool, stack, pos_r=results)
 
         frac_update = sampler_o.acceptance_fraction
 
