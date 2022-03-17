@@ -50,15 +50,6 @@ def walker_init(priors_bounds_w, translation_vector_w, dim_w, n_walkers_w, worki
                 (priors_bounds_w[:, 1])[~mask_vd] - (priors_bounds_w[:, 0])[~mask_vd]) / 2
     init[mask_vd] = priors_bounds_w[:, 0][mask_vd]
 
-    # nll = lambda *args: -lnposterior(*args)
-    # results = op.minimize(nll, init, args=(priors_bounds_w, working_dir, translation_vector_w, lenstool_vector, header, image_file, ramdisk, deprojection_matrix, translation_vector_ex, mag_ex))
-    # print('MAX POSTERIOR: ', results["x"])
-    # pos = [results["x"] + 1e-4 * np.random.randn(len(init)) for i in range(n_walkers_w)]
-
-    # --------------------------------------
-    # --------------------------------------
-    # --------------------------------------
-
     # partial_posterior  MAXIMIZATION
     nll = lambda *args: -partial_posterior(*args)
     results = op.minimize(nll, init, args=(priors_bounds_w, translation_vector_w))
@@ -175,6 +166,8 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
 
     print('Number of threads: ' + str(n_threads))
 
+    free_par_mask = (priors_bounds[:,0] != 0) | (priors_bounds[:,1] != 0)
+
     for i in np.arange(mf[0]):
         print('\nRUN: ' + str(i + 1) + ' of ' + str(mf[0]))
         if i == 0:
@@ -199,7 +192,7 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
             ### CREATE A NEW RUN ###
             else:
                 # DIMENSION OF PARAMETER-SPACE
-                dim = len(priors_bounds)
+                dim = len(priors_bounds[free_par_mask])
                 print('\nNumber of free parameters: ', dim)
 
                 # DEFINE THE NUMBER OF WALKERS n_walkers, ENSURE n_walkers >= 2*(N° OF PARAMETERS)+2
@@ -209,7 +202,7 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
 
                 backend.reset(n_walkers, dim)
 
-                pos = walker_init(priors_bounds, translation_vector, dim, n_walkers, working_dir, ramdisk,
+                pos = walker_init(priors_bounds[free_par_mask], translation_vector[free_par_mask], dim, n_walkers, working_dir, ramdisk,
                                   translation_vector_ex, mag_ex, lenstool_vector, header, image_file,
                                   deprojection_matrix)
 
