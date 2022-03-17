@@ -264,8 +264,14 @@ def lnlike_halos(theta, working_dir, translation_vector, priors_bounds, lenstool
             # COPY THE MULTIPLE IMAGES LensTool INPUT FILE IN THE RAM-DISK DIRECTORY
             shutil.copyfile(working_dir + image_file, path + image_file)
 
+            # ADD FIXED COSMOLOGICAL PARAMS TO THETA
+            mask_free_par = (priors_bounds[:,0] != 0) | (priors_bounds[:,1] != 0)
+            theta_full = np.zeros(len(translation_vector))
+            theta_full[mask_free_par] = theta
+            theta_full[~mask_free_par] = priors_bounds[~mask_free_par, 2]
+
             # CREATE LensTool INPUT FILE FROM SAMPLER PARAMETERS
-            BayesLens_writer(out_path=path, par_vector=theta, translation_vector=translation_vector,
+            BayesLens_writer(out_path=path, par_vector=theta_full, translation_vector=translation_vector,
                              lenstool_vector=lenstool_vector, header=header, priors_bounds=priors_bounds,
                              deprojection_matrix=deprojection_matrix, translation_vector_ex_w=translation_vector_ex,
                              mag_ex_w=mag_ex)
@@ -290,7 +296,7 @@ def lnlike_halos(theta, working_dir, translation_vector, priors_bounds, lenstool
 
         shutil.rmtree(ramdisk + random_name, ignore_errors=True)
 
-    del random_name, path, chires, chires_file, lenstool, mask_negatives
+    del random_name, path, mask_free_par, chires, chires_file, lenstool, mask_negatives
 
     return lnLH
 
@@ -307,8 +313,7 @@ def priors_cosmo(theta, priors_bounds, translation_vector):
     selection_cosmo = prior_creator(theta, priors_bounds[:, 0], priors_bounds[:, 1])
 
     if selection_cosmo:
-        value = np.sum(1 / (priors_bounds[:, 1] - priors_bounds[:, 0]))
-        lnprior_cosmo = -np.log(value)
+        lnprior_cosmo = 0
     else:
         lnprior_cosmo = -np.inf
 
@@ -398,6 +403,6 @@ def lnposterior(theta, priors_bounds, working_dir, translation_vector, lenstool_
     like_h = lnlike_halos(theta, working_dir, translation_vector, priors_bounds, lenstool_vector, header, image_file,
                           ramdisk, deprojection_matrix, translation_vector_ex, mag_ex)
 
-    del priors_h, part
+    del mask_free_par, mask_cosmo, priors_c, priors_h, part
 
     return post_1 + like_h
