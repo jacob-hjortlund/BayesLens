@@ -1,15 +1,21 @@
 #--- LENSTOOL PARS ----------------------
 REFERENCE: 181.55062 -8.8009361
 MULTFILE: images_cat.cat
-H0: 70.0
-OMEGA: 0.3
-LAMBDA: 0.7
 XMIN: -50.0
 XMAX: 50.0
 YMIN: -50.0
 YMAX: 50.0
 Z: 0.439
 N_GAL: -1
+
+#--- COSMOLOGICAL PARS -------------------
+
+H0: 0.0, 0.0, 70.0
+OMEGA: 0.0, 0.0, 0.3
+LAMBDA: 0.0, 0.0, 0.7
+OMEGAK: 0.0, 0.0, 0.0
+WX: 0.0, 0.0, -1.0
+WA: 0.0, 0.0, 0.0
 
 #--- SCALING RELATIONS -------------------
 

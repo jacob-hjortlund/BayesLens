@@ -38,11 +38,11 @@ def BayesLens_parser(par_file=None, dir=None):
     # THIS STRING WILL CONTAIN SEVERAL PARAMETERS OF CONFIGURATION USED IN LensTool INPUT FILE
     header = ''
 
-    scaling_vector = np.zeros(4)
+    scaling_vector = np.zeros(10)
     j = 0
 
     # THIS MATRIX WILL CONTAIN: THE BOUNDARIES, THE MEANS AND STDs, USED FOR CREATE THE PRIORS; THE REFERENCE LUMINOSITY AND CORE RADIUS; AND THE LIST OF GALAXY MAGNITUDES
-    priors_bounds = np.zeros((4, 4), dtype='float')
+    priors_bounds = np.zeros((10, 4), dtype='float')
 
     ### READ INPUT FILE PARAMETERS
     for i, item in enumerate(str_file):
@@ -75,32 +75,62 @@ def BayesLens_parser(par_file=None, dir=None):
             z = item.split(': ')[1]
         elif "N_GAL" in item:
             n_gal = item.split(': ')[1]
+        elif "H0" in item:
+            h0 = item.split(': ')[1].split(',')
+            scaling_vector[0] = np.asarray(h0[2], dtype='float')
+            priors_bounds[0, 0] = float(h0[0]) - float(h0[1])
+            priors_bounds[0, 1] = float(h0[0]) + float(h0[1])
+        elif "OMEGA" in item:
+            omega = item.split(': ')[1].split(',')
+            scaling_vector[1] = np.asarray(omega[2], dtype='float')
+            priors_bounds[1, 0] = float(omega[0]) - float(omega[1])
+            priors_bounds[1, 1] = float(omega[0]) + float(omega[1])
+        elif "LAMBDA" in item:
+            lam = item.split(': ')[1].split(',')
+            scaling_vector[2] = np.asarray(lam[2], dtype='float')
+            priors_bounds[2, 0] = float(lam[0]) - float(lam[1])
+            priors_bounds[2, 1] = float(lam[0]) + float(lam[1])
+        elif "OMEGAK" in item:
+            omegak = item.split(': ')[1].split(',')
+            scaling_vector[3] = np.asarray(omegak[2], dtype='float')
+            priors_bounds[3, 0] = float(omegak[0]) - float(omegak[1])
+            priors_bounds[3, 1] = float(omegak[0]) + float(omegak[1])
+        elif "WX" in item:
+            wx = item.split(': ')[1].split(',')
+            scaling_vector[4] = np.asarray(wx[2], dtype='float')
+            priors_bounds[4, 0] = float(wx[0]) - float(wx[1])
+            priors_bounds[4, 1] = float(wx[0]) + float(wx[1])
+        elif "WA" in item:
+            wa = item.split(': ')[1].split(',')
+            scaling_vector[5] = np.asarray(wa[2], dtype='float')
+            priors_bounds[5, 0] = float(wa[0]) - float(wa[1])
+            priors_bounds[5, 1] = float(wa[0]) + float(wa[1])
         elif "M/L_SLOPE" in item:
-            priors_bounds[2, 2] = float(item.split(': ')[1])
+            priors_bounds[8, 2] = float(item.split(': ')[1])
         elif "REF_RCORE" in item:
-            priors_bounds[3, 2] = float(item.split(': ')[1])
+            priors_bounds[9, 2] = float(item.split(': ')[1])
         elif "VD_SLOPE_SC" in item:
             vdslope_v = item.split(': ')[1].split(',')
-            scaling_vector[0] = np.asarray(vdslope_v[0], dtype='float')
-            priors_bounds[0, 0] = float(vdslope_v[0]) - float(vdslope_v[1])
-            priors_bounds[0, 1] = float(vdslope_v[0]) + float(vdslope_v[1])
+            scaling_vector[6] = np.asarray(vdslope_v[0], dtype='float')
+            priors_bounds[6, 0] = float(vdslope_v[0]) - float(vdslope_v[1])
+            priors_bounds[6, 1] = float(vdslope_v[0]) + float(vdslope_v[1])
         elif "VD_Q_SC" in item:
             vbdq_v = item.split(': ')[1].split(',')
-            scaling_vector[1] = np.asarray(vbdq_v[0], dtype='float')
-            priors_bounds[1, 0] = float(vbdq_v[0]) - float(vbdq_v[1])
-            priors_bounds[1, 1] = float(vbdq_v[0]) + float(vbdq_v[1])
-            priors_bounds[1, 2] = float(vbdq_v[2])
+            scaling_vector[7] = np.asarray(vbdq_v[0], dtype='float')
+            priors_bounds[7, 0] = float(vbdq_v[0]) - float(vbdq_v[1])
+            priors_bounds[7, 1] = float(vbdq_v[0]) + float(vbdq_v[1])
+            priors_bounds[7, 2] = float(vbdq_v[2])
             reference_mag = float(vbdq_v[2])
         elif "VD_SCATTER_SC" in item:
             vdscatter_v = item.split(': ')[1].split(',')
-            scaling_vector[2] = np.asarray(vdscatter_v[0], dtype='float')
-            priors_bounds[2, 0] = float(vdscatter_v[0]) - float(vdscatter_v[1])
-            priors_bounds[2, 1] = float(vdscatter_v[0]) + float(vdscatter_v[1])
+            scaling_vector[8] = np.asarray(vdscatter_v[0], dtype='float')
+            priors_bounds[8, 0] = float(vdscatter_v[0]) - float(vdscatter_v[1])
+            priors_bounds[8, 1] = float(vdscatter_v[0]) + float(vdscatter_v[1])
         elif "CUT_Q_SC" in item:
             cutq_v = item.split(': ')[1].split(',')
-            scaling_vector[3] = np.asarray(cutq_v[0], dtype='float')
-            priors_bounds[3, 0] = float(cutq_v[0]) - float(cutq_v[1])
-            priors_bounds[3, 1] = float(cutq_v[0]) + float(cutq_v[1])
+            scaling_vector[9] = np.asarray(cutq_v[0], dtype='float')
+            priors_bounds[9, 0] = float(cutq_v[0]) - float(cutq_v[1])
+            priors_bounds[9, 1] = float(cutq_v[0]) + float(cutq_v[1])
         elif "HALOS" in item:
             halos_line = i - j + 1
         elif "SHEAR" in item:
