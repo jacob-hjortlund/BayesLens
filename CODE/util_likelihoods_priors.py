@@ -80,7 +80,8 @@ def lnlike_vdgalaxies(theta, priors_bounds, translation_vector):
     :return: summed log likelihood for measured galaxies
     """
 
-    vdslope, vdq, vdscatter = np.asarray(theta[0:3], dtype='float')
+    mask_sr = (translation_vector[:,0] >= 0) & (translation_vector[:,0] < 1)
+    vdslope, vdq, vdscatter = np.asarray(theta[mask_sr][0:3], dtype='float')
 
     mask_vdgalaxies = (np.asarray(translation_vector[:, 0], dtype=float) >= 2) & (
             np.asarray(translation_vector[:, 0], dtype=float) < 3) & (translation_vector[:, 1] == 'v_disp')
@@ -89,7 +90,7 @@ def lnlike_vdgalaxies(theta, priors_bounds, translation_vector):
     sigma = np.asarray(priors_bounds[:, 0][mask_vdgalaxies], dtype='float')
     dsigma = np.asarray(priors_bounds[:, 1][mask_vdgalaxies], dtype='float')
 
-    mag_ref = float(priors_bounds[1, 2])
+    mag_ref = float(priors_bounds[mask_sr][1, 2])
 
     model = vdq * 10 ** ((vdslope / 2.5) * (mag_ref - mag))
     inc2 = (dsigma ** 2 + vdscatter ** 2)
@@ -293,7 +294,7 @@ def partial_posterior(theta, priors_bounds, translation_vector):
     """
 
     # SCALING RELATIONS
-    priors_scaling = priors_scaling_relations(theta, priors_bounds)
+    priors_scaling = priors_scaling_relations(theta, priors_bounds, translation_vector)
     priors_vdgal = prior_vdgalaxies(theta, priors_bounds, translation_vector)
 
     prior_tot = priors_scaling + priors_vdgal
