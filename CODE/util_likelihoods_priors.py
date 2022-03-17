@@ -65,7 +65,7 @@ def priors_scaling_relations(theta, priors_bounds, translation_vector):
     else:
         lnprior_vdgalaxies = -np.inf
 
-    del selection_vd
+    del mask_sr, selection_vd
 
     return lnprior_vdgalaxies
 
@@ -96,7 +96,7 @@ def lnlike_vdgalaxies(theta, priors_bounds, translation_vector):
     inc2 = (dsigma ** 2 + vdscatter ** 2)
     lnlike_vdgalaxies = -0.5 * (np.sum(np.log(2 * np.pi * inc2) + ((sigma - model) ** 2) / inc2))
 
-    del vdslope, vdq, vdscatter, mask_vdgalaxies, mag, sigma, dsigma, mag_ref, model, inc2
+    del mask_sr, vdslope, vdq, vdscatter, mask_vdgalaxies, mag, sigma, dsigma, mag_ref, model, inc2
 
     return lnlike_vdgalaxies
 
@@ -161,19 +161,21 @@ def lnlike_galaxies(theta, priors_bounds, translation_vector):
     :param translation_vector: see *BayesLens_parser
     :return: summed log value of gaussian priors
     """
-    vdslope, vdq, vdscatter = theta[0:3]
+
+    mask_sr = (translation_vector[:,0] >= 0) & (translation_vector[:,0] < 1)
+    vdslope, vdq, vdscatter = theta[mask_sr][0:3]
 
     mask_galaxies_vd = (np.asarray(translation_vector[:, 0], dtype=float) >= 3) & (translation_vector[:, 1] == 'v_disp')
 
     sigmas = np.asarray(theta[mask_galaxies_vd], dtype='float')
     mags = np.asarray(priors_bounds[:, 2][mask_galaxies_vd], dtype='float')
-    mag_ref_vd = float(priors_bounds[1, 2])
+    mag_ref_vd = float(priors_bounds[mask_sr][1, 2])
 
     vdmodel = vdq * (10.0 ** (0.4 * vdslope * (mag_ref_vd - mags)))
     vdinc2s = (vdscatter ** 2)
     lnlike_vdscaling = -0.5 * (np.sum(np.log(2 * np.pi * vdinc2s) + ((sigmas - vdmodel) ** 2) / vdinc2s))
 
-    del vdslope, vdq, vdscatter, mask_galaxies_vd, sigmas, mags, mag_ref_vd
+    del mask_sr, vdslope, vdq, vdscatter, mask_galaxies_vd, sigmas, mags, mag_ref_vd
 
     return lnlike_vdscaling
 
