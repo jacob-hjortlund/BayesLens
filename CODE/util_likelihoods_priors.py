@@ -239,12 +239,14 @@ def lnlike_halos(theta, working_dir, translation_vector, priors_bounds, lenstool
     :return: likelihood of multiple image positions
     """
     # AVOID THE POSSIBILITY OF NEGATIVE VELOCITY DISPERSIONS
-    mask_negatives = ((translation_vector[:, 1] == 'kappa') | (translation_vector[:, 1] == 'gamma') | (
-                translation_vector[:, 1] == 'cut_radius') | (translation_vector[:, 1] == 'core_radius') | (
-                                  translation_vector[:, 1] == 'ellipticite') | (
-                                  translation_vector[:, 1] == 'v_disp') | (
-                                  (np.asarray(translation_vector[:, 0], dtype=float) < 1) & (
-                                      np.asarray(translation_vector[:, 0], dtype=float) >= 0))) & (theta < 0)
+    mask_free_par = (priors_bounds[:,0] != 0) | (priors_bounds[:,1] != 0)
+    translation_vector_free = translation_vector[mask_free_par]
+    mask_negatives = ((translation_vector_free[:, 1] == 'kappa') | (translation_vector_free[:, 1] == 'gamma') | (
+                translation_vector_free[:, 1] == 'cut_radius') | (translation_vector_free[:, 1] == 'core_radius') | (
+                                  translation_vector_free[:, 1] == 'ellipticite') | (
+                                  translation_vector_free[:, 1] == 'v_disp') | (
+                                  (np.asarray(translation_vector_free[:, 0], dtype=float) < 1) & (
+                                      np.asarray(translation_vector_free[:, 0], dtype=float) >= 0))) & (theta < 0)
 
     if len(theta[mask_negatives]) > 0:
         lnLH = -np.inf
@@ -265,7 +267,6 @@ def lnlike_halos(theta, working_dir, translation_vector, priors_bounds, lenstool
             shutil.copyfile(working_dir + image_file, path + image_file)
 
             # ADD FIXED COSMOLOGICAL PARAMS TO THETA
-            mask_free_par = (priors_bounds[:,0] != 0) | (priors_bounds[:,1] != 0)
             theta_full = np.zeros(len(translation_vector))
             theta_full[mask_free_par] = theta
             theta_full[~mask_free_par] = priors_bounds[~mask_free_par, 2]
@@ -296,7 +297,7 @@ def lnlike_halos(theta, working_dir, translation_vector, priors_bounds, lenstool
 
         shutil.rmtree(ramdisk + random_name, ignore_errors=True)
 
-    del random_name, path, mask_free_par, chires, chires_file, lenstool, mask_negatives
+    del mask_free_par, translation_vector_free, random_name, path, chires, chires_file, lenstool, mask_negatives
 
     return lnLH
 
@@ -372,8 +373,8 @@ def lnposterior(theta, priors_bounds, working_dir, translation_vector, lenstool_
     # COSMOLOGICAL PRIOR
     mask_free_par = (priors_bounds[:,0] != 0) | (priors_bounds[:,1] != 0)
     mask_cosmo = (
-        (np.asarray(translation_vector[:, 0], dtype=float) < 0) &
-        (np.asarray(translation_vector[:, 0], dtype=float) > -1)
+        (np.asarray(translation_vector[mask_free_par][:, 0], dtype=float) < 0) &
+        (np.asarray(translation_vector[mask_free_par][:, 0], dtype=float) > -1)
     )
     if np.count_nonzero(mask_cosmo) != 0:
         priors_c = priors_cosmo(
@@ -387,7 +388,7 @@ def lnposterior(theta, priors_bounds, working_dir, translation_vector, lenstool_
         return -np.inf
 
     # HALOS PRIOR
-    priors_h = priors_halos(theta, priors_bounds, translation_vector)
+    priors_h = priors_halos(theta, priors_bounds[mask_free_par], translation_vector[mask_free_par])
 
     if not np.isfinite(priors_h):
         return -np.inf
