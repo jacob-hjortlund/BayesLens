@@ -25,7 +25,7 @@ def BayesLens_writer(out_path=None, par_vector=None, translation_vector=None, le
     :return: save a LensTool input file in *out_path
     """
 
-    par_vector_ex_w = scaling_func(mag_ex_w, par_vector[1], par_vector[0], priors_bounds[1][2])
+    par_vector_ex_w = scaling_func(mag_ex_w, par_vector[7], par_vector[6], priors_bounds[7][2])
 
     par_vector = np.append(par_vector, par_vector_ex_w)
 
@@ -39,10 +39,10 @@ def BayesLens_writer(out_path=None, par_vector=None, translation_vector=None, le
     mask_mem = (np.asarray(translation_vector[:, 0], dtype=float) >= 2.)
 
     r_core[mask_mem] = np.round(
-        scaling_func(np.append(priors_bounds[:, 2], mag_ex_w)[mask_mem], priors_bounds[3][2], 0.5, priors_bounds[1][2]),
+        scaling_func(np.append(priors_bounds[:, 2], mag_ex_w)[mask_mem], priors_bounds[9][2], 0.5, priors_bounds[7][2]),
         4)
-    r_cut[mask_mem] = np.round(scaling_func(np.append(priors_bounds[:, 2], mag_ex_w)[mask_mem], float(par_vector[3]),
-                                            priors_bounds[2][2] - 2 * float(par_vector[0]) + 1, priors_bounds[1][2]), 4)
+    r_cut[mask_mem] = np.round(scaling_func(np.append(priors_bounds[:, 2], mag_ex_w)[mask_mem], float(par_vector[9]),
+                                            priors_bounds[8][2] - 2 * float(par_vector[6]) + 1, priors_bounds[7][2]), 4)
 
     # HERE THE LensTool FIDUCIAL VELOCITY DISPERSION IS DERIVED FROM THE MEASURED VELOCITIES WITHIN AN APERTURE
     value = r_cut[mask_mem]

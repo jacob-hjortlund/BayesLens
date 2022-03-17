@@ -222,7 +222,18 @@ def BayesLens_parser(par_file=None, dir=None):
     par_vectors = scaling_vector
 
     # THIS MATRIX MAP par_vectors DESCRIBING THE TYPE OF PARAMETER FOR EACH ENTRY: 0.x REFER TO SCALING RELATION; 1.x TO HALOS; 2.x TO MEASURED GALAXIES; 3.x TO GALAXIES WITHOUT MEASURED VELOCITY
-    translation_vector = np.array([['0.0', 'vd_slope'], ['0.1', 'vd_q'], ['0.2', 'vd_scatter'], ['0.3', 'cut_q']])
+    translation_vector = np.array([
+        ['-1.0', 'H0'],
+        ['-1.1', 'omega'],
+        ['-1.2', 'lambda'],
+        ['-1.3', 'omegaK'],
+        ['-1.4', 'wX'],
+        ['-1.5', 'wa']
+        ['0.0', 'vd_slope'],
+        ['0.1', 'vd_q'],
+        ['0.2', 'vd_scatter'],
+        ['0.3', 'cut_q']
+    ])
 
     # THIS MATRIX WILL BE USED TO CREATE LensTool INPUT FILE
     lenstool_vector = np.full((1, 7), '')
