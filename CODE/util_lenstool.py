@@ -25,33 +25,6 @@ def BayesLens_writer(out_path=None, par_vector=None, translation_vector=None, le
     :return: save a LensTool input file in *out_path
     """
 
-    par_vector_ex_w = scaling_func(mag_ex_w, par_vector[7], par_vector[6], priors_bounds[7][2])
-
-    par_vector = np.append(par_vector, par_vector_ex_w)
-
-    translation_vector = np.vstack((translation_vector, translation_vector_ex_w))
-
-    par_vector = np.round(par_vector, 4)
-
-    r_core = np.zeros(len(par_vector))
-    r_cut = np.zeros(len(par_vector))
-
-    mask_mem = (np.asarray(translation_vector[:, 0], dtype=float) >= 2.)
-
-    r_core[mask_mem] = np.round(
-        scaling_func(np.append(priors_bounds[:, 2], mag_ex_w)[mask_mem], priors_bounds[9][2], 0.5, priors_bounds[7][2]),
-        4)
-    r_cut[mask_mem] = np.round(scaling_func(np.append(priors_bounds[:, 2], mag_ex_w)[mask_mem], float(par_vector[9]),
-                                            priors_bounds[8][2] - 2 * float(par_vector[6]) + 1, priors_bounds[7][2]), 4)
-
-    # HERE THE LensTool FIDUCIAL VELOCITY DISPERSION IS DERIVED FROM THE MEASURED VELOCITIES WITHIN AN APERTURE
-    value = r_cut[mask_mem]
-    index = find_nearest(deprojection_matrix[:, :, 0], value)
-    d_matrix = deprojection_matrix[:, :, 1]
-    vd_lenstool = np.round((par_vector[mask_mem] / d_matrix[np.arange(len(d_matrix[:, 0])), index]), 4)
-
-    halos = ''
-
     # ADD COSMOLOGICAL PARAMETERS TO HEADER
     mask_cosmo = (np.asarray(translation_vector[:,0], dtype=float) < 0.)
     translation_vector_cosmo_writer = copy.copy(translation_vector[mask_cosmo])
@@ -70,7 +43,39 @@ def BayesLens_writer(out_path=None, par_vector=None, translation_vector=None, le
     index_cosmo = header.find('\ngrille')
     header = header[:index_cosmo] + cosmo_pars_str + header[index_cosmo:]
 
-    # WRITE REMAINING PARAMETERS TO FILE
+    # FORMAT AND WRITE REMAINING PARAMETERS TO FILE
+
+    par_vector = par_vector[~mask_cosmo]
+    translation_vector = translation_vector[~mask_cosmo]
+    priors_bounds = priors_bounds[~mask_cosmo]
+
+    par_vector_ex_w = scaling_func(mag_ex_w, par_vector[1], par_vector[0], priors_bounds[1][2])
+
+    par_vector = np.append(par_vector, par_vector_ex_w)
+
+    translation_vector = np.vstack((translation_vector, translation_vector_ex_w))
+
+    par_vector = np.round(par_vector, 4)
+
+    r_core = np.zeros(len(par_vector))
+    r_cut = np.zeros(len(par_vector))
+
+    mask_mem = (np.asarray(translation_vector[:, 0], dtype=float) >= 2.)
+
+    r_core[mask_mem] = np.round(
+        scaling_func(np.append(priors_bounds[:, 2], mag_ex_w)[mask_mem], priors_bounds[3][2], 0.5, priors_bounds[1][2]),
+        4)
+    r_cut[mask_mem] = np.round(scaling_func(np.append(priors_bounds[:, 2], mag_ex_w)[mask_mem], float(par_vector[3]),
+                                            priors_bounds[2][2] - 2 * float(par_vector[0]) + 1, priors_bounds[1][2]), 4)
+
+    # HERE THE LensTool FIDUCIAL VELOCITY DISPERSION IS DERIVED FROM THE MEASURED VELOCITIES WITHIN AN APERTURE
+    value = r_cut[mask_mem]
+    index = find_nearest(deprojection_matrix[:, :, 0], value)
+    d_matrix = deprojection_matrix[:, :, 1]
+    vd_lenstool = np.round((par_vector[mask_mem] / d_matrix[np.arange(len(d_matrix[:, 0])), index]), 4)
+
+    halos = ''
+
     translation_vector_writer = copy.copy(translation_vector)
 
     par_vector[mask_mem] = vd_lenstool
