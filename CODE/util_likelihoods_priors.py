@@ -4,6 +4,7 @@
 # ==========================================================
 
 
+from gettext import translation
 import numpy as np
 import os
 import shutil
@@ -57,7 +58,10 @@ def priors_scaling_relations(theta, priors_bounds, translation_vector):
     :return: -inf if scaling relation parameters are outside their flat priors. Otherwise -ln(scatter). scatter = scatter of galaxies around fitted scaling relation
     """
 
-    mask_sr = (translation_vector[:,0] >= 0) & (translation_vector[:,0] < 1)
+    mask_sr = (
+        (np.asarray(translation_vector[:,0], dtype=float) >= 0) & 
+        (np.asarray(translation_vector[:,0], dtype=float) < 1)
+    )
     selection_vd = prior_creator(theta[mask_sr], priors_bounds[mask_sr, 0], priors_bounds[mask_sr, 1])
 
     if selection_vd:
@@ -80,7 +84,10 @@ def lnlike_vdgalaxies(theta, priors_bounds, translation_vector):
     :return: summed log likelihood for measured galaxies
     """
 
-    mask_sr = (translation_vector[:,0] >= 0) & (translation_vector[:,0] < 1)
+    mask_sr = (
+        (np.asarray(translation_vector[:,0], dtype=float) >= 0) & 
+        (np.asarray(translation_vector[:,0], dtype=float) < 1)
+    )
     vdslope, vdq, vdscatter = np.asarray(theta[mask_sr][0:3], dtype='float')
 
     mask_vdgalaxies = (np.asarray(translation_vector[:, 0], dtype=float) >= 2) & (
@@ -162,7 +169,10 @@ def lnlike_galaxies(theta, priors_bounds, translation_vector):
     :return: summed log value of gaussian priors
     """
 
-    mask_sr = (translation_vector[:,0] >= 0) & (translation_vector[:,0] < 1)
+    mask_sr = (
+        (np.asarray(translation_vector[:,0], dtype=float) >= 0) & 
+        (np.asarray(translation_vector[:,0], dtype=float) < 1)
+    )
     vdslope, vdq, vdscatter = theta[mask_sr][0:3]
 
     mask_galaxies_vd = (np.asarray(translation_vector[:, 0], dtype=float) >= 3) & (translation_vector[:, 1] == 'v_disp')
@@ -284,6 +294,27 @@ def lnlike_halos(theta, working_dir, translation_vector, priors_bounds, lenstool
 
     return lnLH
 
+def priors_cosmo(theta, priors_bounds, translation_vector):
+    """
+    Flat priors on cosmological parameters
+
+    :param theta: array containing all parameters optimized by BayesLens
+    :param priors_bounds: see *BayesLens_parser
+    :param translation_vector: see *BayesLens_parser
+    :return: -inf if cosmological parameters are outside their flat priors. Otherwise blah
+    """
+
+    selection_cosmo = prior_creator(theta, priors_bounds[:, 0], priors_bounds[:, 1])
+
+    if selection_cosmo:
+        value = np.sum(1 / (priors_bounds[:, 1] - priors_bounds[:, 0]))
+        lnprior_cosmo = -np.log(value)
+    else:
+        lnprior_cosmo = -np.inf
+
+    del selection_cosmo
+
+    return lnprior_cosmo
 
 def partial_posterior(theta, priors_bounds, translation_vector):
     """
@@ -317,7 +348,7 @@ def partial_posterior(theta, priors_bounds, translation_vector):
 def lnposterior(theta, priors_bounds, working_dir, translation_vector, lenstool_vector, header, image_file, ramdisk,
                 deprojection_matrix, translation_vector_ex, mag_ex):
     """
-    Compute flat priors on DM halo parameters, multiple image likelihood and sun the result to *partial_posterior
+    Compute flat priors on DM halo parameters, multiple image likelihood and sum the result to *partial_posterior
 
     :param theta: array containing all parameters optimized by BayesLens
     :param priors_bounds: see *BayesLens_parser
@@ -332,6 +363,18 @@ def lnposterior(theta, priors_bounds, working_dir, translation_vector, lenstool_
     :param mag_ex: see *BayesLens_parser
     :return: sum of eq.14, 15 of Bergamini et al. 2020 and the result from *partial_posterior
     """
+    
+    # COSMOLOGICAL PRIOR
+    mask_free_par = (priors_bounds[:,0] != 0) | (priors_bounds[:,1] != 0)
+    mask_cosmo = np.asarray(translation_vector[mask_free_par, 0], dtype=float) < 0
+    if np.count_nonzero(mask_cosmo) != 0:
+        priors_c = priors_cosmo(
+            theta[mask_cosmo], priors_bounds[mask_free_par][mask_cosmo],
+            translation_vector[mask_free_par][mask_cosmo]
+        )
+    else:
+        priors_c = 0
+    
     # HALOS PRIOR
     priors_h = priors_halos(theta, priors_bounds, translation_vector)
 
@@ -340,7 +383,7 @@ def lnposterior(theta, priors_bounds, working_dir, translation_vector, lenstool_
 
     part = partial_posterior(theta, priors_bounds, translation_vector)
 
-    post_1 = part + priors_h
+    post_1 = part + priors_h + priors_c
 
     # LENSTOOL LIKELIHOOD
     if not np.isfinite(post_1):
