@@ -228,7 +228,7 @@ def BayesLens_parser(par_file=None, dir=None):
         ['-1.2', 'lambda'],
         ['-1.3', 'omegaK'],
         ['-1.4', 'wX'],
-        ['-1.5', 'wa']
+        ['-1.5', 'wa'],
         ['0.0', 'vd_slope'],
         ['0.1', 'vd_q'],
         ['0.2', 'vd_scatter'],

@@ -52,6 +52,25 @@ def BayesLens_writer(out_path=None, par_vector=None, translation_vector=None, le
 
     halos = ''
 
+    # ADD COSMOLOGICAL PARAMETERS TO HEADER
+    mask_cosmo = (np.asarray(translation_vector[:,0], dtype=float) < 0.)
+    translation_vector_cosmo_writer = copy.copy(translation_vector[mask_cosmo])
+    translation_vector_cosmo_writer[:,1] = np.core.defchararray.add(
+        np.full(translation_vector_cosmo_writer.shape[0], '\t', dtype='str'),
+        translation_vector_cosmo_writer[:, 1]
+    )
+    cosmo_pars = par_vector[mask_cosmo]
+    par_matrix = np.concatenate((translation_vector_cosmo_writer, cosmo_pars[:, None]), axis=1)
+
+    cosmo_pars_str = ''
+    for par in par_matrix:
+        cosmo_pars_str += par[1] + ' ' + par[2] + '\n'
+    cosmo_pars_str += '\tend\n'
+
+    index_cosmo = header.find('\ngrille')
+    header = header[:index_cosmo] + cosmo_pars_str + header[index_cosmo:]
+
+    # WRITE REMAINING PARAMETERS TO FILE
     translation_vector_writer = copy.copy(translation_vector)
 
     par_vector[mask_mem] = vd_lenstool
