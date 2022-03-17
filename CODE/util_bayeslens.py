@@ -80,7 +80,7 @@ def BayesLens_parser(par_file=None, dir=None):
             scaling_vector[0] = np.asarray(h0[2], dtype='float')
             priors_bounds[0, 0] = float(h0[0]) - float(h0[1])
             priors_bounds[0, 1] = float(h0[0]) + float(h0[1])
-        elif "OMEGA" in item:
+        elif "OMEGA0" in item:
             omega = item.split(': ')[1].split(',')
             scaling_vector[1] = np.asarray(omega[2], dtype='float')
             priors_bounds[1, 0] = float(omega[0]) - float(omega[1])
