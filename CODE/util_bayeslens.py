@@ -58,12 +58,8 @@ def BayesLens_parser(par_file=None, dir=None):
             header += '\nimage\n\tmultfile 1 ' + item.split(': ')[1]
             image_file = item.split(': ')[1][:-1]
             header += '\tforme -10\n\tend\n'
-        elif "H0" in item:
-            header += '\ncosmology\n\tH0 ' + item.split(': ')[1]
-        elif "OMEGA" in item:
-            header += '\tomega ' + item.split(': ')[1]
-        elif "LAMBDA" in item:
-            header += '\tlambda ' + item.split(': ')[1] + '\tend\n'
+
+            header += '\ncosmology\n'
             header += '\ngrille\n\tnlens 1000\n'
             header += '\tnlens_opt 0\n'
             header += '\tnombre 256\n\tend\n'
