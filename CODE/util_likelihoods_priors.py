@@ -47,19 +47,21 @@ def ln_gauss(vector, mu, std):
     return lg
 
 
-def priors_scaling_relations(theta, priors_bounds):
+def priors_scaling_relations(theta, priors_bounds, translation_vector):
     """
     Flat priors on scaling relation parameters (see eq.9 Bergamini et al. 2020)
 
     :param theta: array containing all parameters optimized by BayesLens
     :param priors_bounds: see *BayesLens_parser
+    :param translation_vector: see *BayesLens_parser
     :return: -inf if scaling relation parameters are outside their flat priors. Otherwise -ln(scatter). scatter = scatter of galaxies around fitted scaling relation
     """
 
-    selection_vd = prior_creator(theta[:4], priors_bounds[:4, 0], priors_bounds[:4, 1])
+    mask_sr = (translation_vector[:,0] >= 0) & (translation_vector[:,0] < 1)
+    selection_vd = prior_creator(theta[mask_sr], priors_bounds[mask_sr, 0], priors_bounds[mask_sr, 1])
 
     if selection_vd:
-        lnprior_vdgalaxies = -np.log(theta[2])
+        lnprior_vdgalaxies = -np.log(theta[mask_sr][2])
     else:
         lnprior_vdgalaxies = -np.inf
 
