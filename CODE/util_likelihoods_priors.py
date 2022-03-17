@@ -203,7 +203,7 @@ def priors_halos(theta, priors_bounds, translation_vector):
 
     mask_halos = ((np.asarray(translation_vector[:, 0], dtype=float) >= 1) & (
                 np.asarray(translation_vector[:, 0], dtype=float) < 2)) | (
-                             np.asarray(translation_vector[:, 0], dtype=float) < 0)
+                             np.asarray(translation_vector[:, 0], dtype=float) <= -1)
 
     halos = np.asarray(theta[mask_halos], dtype='float')
     priors_lowbounds_halos = np.asarray(priors_bounds[:, 0][mask_halos], dtype='float')
@@ -366,7 +366,10 @@ def lnposterior(theta, priors_bounds, working_dir, translation_vector, lenstool_
     
     # COSMOLOGICAL PRIOR
     mask_free_par = (priors_bounds[:,0] != 0) | (priors_bounds[:,1] != 0)
-    mask_cosmo = np.asarray(translation_vector[mask_free_par, 0], dtype=float) < 0
+    mask_cosmo = (
+        (np.asarray(translation_vector[:, 0], dtype=float) < 0) &
+        (np.asarray(translation_vector[:, 0], dtype=float) > -1)
+    )
     if np.count_nonzero(mask_cosmo) != 0:
         priors_c = priors_cosmo(
             theta[mask_cosmo], priors_bounds[mask_free_par][mask_cosmo],
@@ -375,13 +378,16 @@ def lnposterior(theta, priors_bounds, working_dir, translation_vector, lenstool_
     else:
         priors_c = 0
     
+    if not np.isfinite(priors_c):
+        return -np.inf
+
     # HALOS PRIOR
     priors_h = priors_halos(theta, priors_bounds, translation_vector)
 
     if not np.isfinite(priors_h):
         return -np.inf
 
-    part = partial_posterior(theta, priors_bounds, translation_vector)
+    part = partial_posterior(theta, priors_bounds[mask_free_par], translation_vector[mask_free_par])
 
     post_1 = part + priors_h + priors_c
 

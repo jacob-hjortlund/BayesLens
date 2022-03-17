@@ -57,7 +57,10 @@ def walker_init(priors_bounds_w, translation_vector_w, dim_w, n_walkers_w, worki
     pos = [results["x"] + 1e-4 * np.random.randn(len(init)) for i in range(n_walkers_w)]
 
     mask_halo_cosmo = (
-        (np.asarray(translation_vector_w[:dim_w, 0], dtype=float) < 0) |
+        (
+            (np.asarray(translation_vector_w[:dim_w, 0], dtype=float) < 0) &
+            (np.asarray(translation_vector_w[:dim_w, 0], dtype=float) > -1)
+        ) |
         (
             (np.asarray(translation_vector_w[:dim_w, 0], dtype=float) >= 1) &
             (np.asarray(translation_vector_w[:dim_w, 0], dtype=float) < 2)

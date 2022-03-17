@@ -223,12 +223,12 @@ def BayesLens_parser(par_file=None, dir=None):
 
     # THIS MATRIX MAP par_vectors DESCRIBING THE TYPE OF PARAMETER FOR EACH ENTRY: 0.x REFER TO SCALING RELATION; 1.x TO HALOS; 2.x TO MEASURED GALAXIES; 3.x TO GALAXIES WITHOUT MEASURED VELOCITY
     translation_vector = np.array([
-        ['-1.0', 'H0'],
-        ['-1.1', 'omega'],
-        ['-1.2', 'lambda'],
-        ['-1.3', 'omegaK'],
-        ['-1.4', 'wX'],
-        ['-1.5', 'wa'],
+        ['-0.1', 'H0'],
+        ['-0.2', 'omega'],
+        ['-0.3', 'lambda'],
+        ['-0.4', 'omegaK'],
+        ['-0.5', 'wX'],
+        ['-0.6', 'wa'],
         ['0.0', 'vd_slope'],
         ['0.1', 'vd_q'],
         ['0.2', 'vd_scatter'],

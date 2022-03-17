@@ -26,7 +26,10 @@ def BayesLens_writer(out_path=None, par_vector=None, translation_vector=None, le
     """
 
     # ADD COSMOLOGICAL PARAMETERS TO HEADER
-    mask_cosmo = (np.asarray(translation_vector[:,0], dtype=float) < 0.)
+    mask_cosmo = (
+        (np.asarray(translation_vector[:, 0], dtype=float) < 0) &
+        (np.asarray(translation_vector[:, 0], dtype=float) > -1)
+    )
     translation_vector_cosmo_writer = copy.copy(translation_vector[mask_cosmo])
     translation_vector_cosmo_writer[:,1] = np.core.defchararray.add(
         np.full(translation_vector_cosmo_writer.shape[0], '\t', dtype='str'),
