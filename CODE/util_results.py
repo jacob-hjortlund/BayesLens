@@ -14,7 +14,6 @@ import glob
 import shutil
 
 import matplotlib
-matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 from util_func import randomstring

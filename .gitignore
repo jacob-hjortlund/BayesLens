@@ -1,3 +1,5 @@
 __pycache__/
+CODE/__pycache__/
 slurm_outputs/
 run.*
+EXAMPLES/TEST/corner_plots.ipynb
