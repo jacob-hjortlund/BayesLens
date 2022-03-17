@@ -55,19 +55,20 @@ def walker_init(priors_bounds_w, translation_vector_w, dim_w, n_walkers_w, worki
     results = op.minimize(nll, init, args=(priors_bounds_w, translation_vector_w))
 
     pos = [results["x"] + 1e-4 * np.random.randn(len(init)) for i in range(n_walkers_w)]
-    # pos = np.zeros((n_walkers_w,len(priors_bounds_w[:dim_w, 0])))
 
-    mask_galaxies = (np.asarray(translation_vector_w[:dim_w, 0], dtype=float) >= 2)
-    mask_lkpar = np.zeros(len(translation_vector_w[:dim_w, 0]), dtype='bool')
-    mask_lkpar[0:3] = True
-    mask_lkpriors = mask_galaxies | mask_lkpar
+    mask_halo_cosmo = (
+        (np.asarray(translation_vector_w[:dim_w, 0], dtype=float) < 0) |
+        (
+            (np.asarray(translation_vector_w[:dim_w, 0], dtype=float) >= 1) &
+            (np.asarray(translation_vector_w[:dim_w, 0], dtype=float) < 2)
+        )
+    )
 
     for i in range(n_walkers_w):
-        pos[i][~mask_lkpriors] = priors_bounds_w[:dim_w, 0][~mask_lkpriors] + (
-                (priors_bounds_w[:dim_w, 1])[~mask_lkpriors] -
+        pos[i][mask_halo_cosmo] = priors_bounds_w[:dim_w, 0][mask_halo_cosmo] + (
+                (priors_bounds_w[:dim_w, 1])[mask_halo_cosmo] -
                 (priors_bounds_w[:dim_w, 0])[
-                    ~mask_lkpriors]) * np.random.uniform(0., 1., (len((priors_bounds_w[:dim_w, 0])[~mask_lkpriors])))
-        # pos[i][mask_lkpriors] = results["x"][mask_lkpriors] + 1e-4 * np.random.randn(len(results["x"][mask_lkpriors]))
+                    mask_halo_cosmo]) * np.random.uniform(0., 1., (len((priors_bounds_w[:dim_w, 0])[mask_halo_cosmo])))
 
     return pos
 
