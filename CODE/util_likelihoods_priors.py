@@ -301,7 +301,7 @@ def lnlike_halos(theta, working_dir, translation_vector, priors_bounds, lenstool
 
     return lnLH
 
-def priors_cosmo(theta, priors_bounds):
+def priors_cosmo(theta, priors_bounds, translation_vector):
     """
     Flat priors on cosmological parameters
 
@@ -311,10 +311,36 @@ def priors_cosmo(theta, priors_bounds):
     :return: -inf if cosmological parameters are outside their flat priors. Otherwise blah
     """
 
-    selection_cosmo = prior_creator(theta, priors_bounds[:, 0], priors_bounds[:, 1])
+    mask_free_par = (priors_bounds[:,0] != 0) | (priors_bounds[:,1] != 0)
+    mask_cosmo = (
+        (np.asarray(translation_vector[:, 0], dtype=float) < 0) &
+        (np.asarray(translation_vector[:, 0], dtype=float) > -1)
+    )
+    mask_cosmo_free = mask_cosmo[mask_free_par]
+    mask_density = (
+        (translation_vector[:,1] == 'omega') |
+        (translation_vector[:,1] == 'lambda') |
+        (translation_vector[:,1] == 'omegaK')
+    )
+    mask_density_free = mask_density[mask_free_par]
+    mask_density_fixed = mask_density & ~mask_free_par
+    free_densities = theta[mask_density_free]
+    fixed_densities = priors_bounds[mask_density_fixed, 2]
+
+    selection_cosmo = prior_creator(
+        theta[mask_cosmo_free],
+        priors_bounds[mask_free_par][mask_cosmo_free][:, 0],
+        priors_bounds[mask_free_par][mask_cosmo_free][:, 1]
+    )
+
+    if np.count_nonzero(mask_cosmo_free) == 0:
+        lnprior_cosmo = 0.
+
+    is_density_physical = (np.sum(free_densities) + np.sum(fixed_densities)) == 1.
+    selection_cosmo *= is_density_physical
 
     if selection_cosmo:
-        lnprior_cosmo = 0
+        lnprior_cosmo = 0.
     else:
         lnprior_cosmo = -np.inf
 
@@ -371,22 +397,15 @@ def lnposterior(theta, priors_bounds, working_dir, translation_vector, lenstool_
     """
     
     # COSMOLOGICAL PRIOR
-    mask_free_par = (priors_bounds[:,0] != 0) | (priors_bounds[:,1] != 0)
-    mask_cosmo = (
-        (np.asarray(translation_vector[mask_free_par][:, 0], dtype=float) < 0) &
-        (np.asarray(translation_vector[mask_free_par][:, 0], dtype=float) > -1)
+    priors_c = priors_cosmo(
+        theta, priors_bounds, translation_vector
     )
-    if np.count_nonzero(mask_cosmo) != 0:
-        priors_c = priors_cosmo(
-            theta[mask_cosmo], priors_bounds[mask_free_par][mask_cosmo]
-        )
-    else:
-        priors_c = 0
     
     if not np.isfinite(priors_c):
         return -np.inf
 
     # HALOS PRIOR
+    mask_free_par = (priors_bounds[:,0] != 0) | (priors_bounds[:,1] != 0)
     priors_h = priors_halos(theta, priors_bounds[mask_free_par], translation_vector[mask_free_par])
 
     if not np.isfinite(priors_h):
