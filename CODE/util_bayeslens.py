@@ -341,7 +341,7 @@ def BayesLens_parser(par_file=None, dir=None):
 
         if h < int(n_gal):
             par_vectors = np.append(par_vectors,
-                                    scaling_func(table_galaxies[h]['MAG'], scaling_vector[1], scaling_vector[0],
+                                    scaling_func(table_galaxies[h]['MAG'], scaling_vector[7], scaling_vector[6],
                                                  reference_mag))
 
             translation_vector = np.vstack((translation_vector, [table_galaxies[h]['label'], 'v_disp']))
@@ -349,8 +349,8 @@ def BayesLens_parser(par_file=None, dir=None):
             R_mean = np.mean(table_vdgalaxies['R'])
 
             priors_bounds = np.vstack((priors_bounds, [
-                scaling_func(table_galaxies[h]['MAG'], scaling_vector[1] - 150, scaling_vector[0], reference_mag),
-                scaling_func(table_galaxies[h]['MAG'], scaling_vector[1] + 150, scaling_vector[0], reference_mag),
+                scaling_func(table_galaxies[h]['MAG'], scaling_vector[7] - 150, scaling_vector[6], reference_mag),
+                scaling_func(table_galaxies[h]['MAG'], scaling_vector[7] + 150, scaling_vector[6], reference_mag),
                 table_galaxies[h]['MAG'], R_mean]))
 
             lenstool_vector = np.vstack(
@@ -374,15 +374,6 @@ def BayesLens_parser(par_file=None, dir=None):
     except:
         # HERE WE CREATE A DEPROJECTION MATRIX TO TRANSLATE MEASURED VELOCITY DISPERSION TO LensTool FIDUCIAL VELOCITY DISPERSION
         # GIVEN GALAXIES APERTURES (IN THE INPUT FILE) AND DIFFERENT POSSIBILITIES OF TRUNCATION RADII (see paper).
-
-        # r_core = np.zeros(len(par_vectors))
-        #
-        # mask_mem = (np.asarray(translation_vector[:,0], dtype=float) >= 2.)
-        # r_core[mask_mem] = scaling_func(priors_bounds[:,2][mask_mem],priors_bounds[3][2],0.5,priors_bounds[1][2])
-        #
-        # deprojection_matrix_resolution = 2
-        #
-        # deprojection_matrix = np.zeros((len(r_core[mask_mem]),deprojection_matrix_resolution,2))
 
         r_core = np.zeros(len(np.append(par_vectors, mag_ex)))
 
