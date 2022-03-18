@@ -301,7 +301,7 @@ def lnlike_halos(theta, working_dir, translation_vector, priors_bounds, lenstool
 
     return lnLH
 
-def priors_cosmo(theta, priors_bounds, translation_vector):
+def priors_cosmo(theta, priors_bounds):
     """
     Flat priors on cosmological parameters
 
@@ -378,8 +378,7 @@ def lnposterior(theta, priors_bounds, working_dir, translation_vector, lenstool_
     )
     if np.count_nonzero(mask_cosmo) != 0:
         priors_c = priors_cosmo(
-            theta[mask_cosmo], priors_bounds[mask_free_par][mask_cosmo],
-            translation_vector[mask_free_par][mask_cosmo]
+            theta[mask_cosmo], priors_bounds[mask_free_par][mask_cosmo]
         )
     else:
         priors_c = 0
