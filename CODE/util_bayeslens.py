@@ -389,8 +389,8 @@ def BayesLens_parser(par_file=None, dir=None):
         translation_vector_matrix = np.vstack((translation_vector, translation_vector_ex))
 
         mask_mem = (np.asarray(translation_vector_matrix[:, 0], dtype=float) >= 2.)
-        r_core[mask_mem] = scaling_func(np.append(priors_bounds[:, 2], mag_ex)[mask_mem], priors_bounds[3][2], 0.5,
-                                        priors_bounds[1][2])
+        r_core[mask_mem] = scaling_func(np.append(priors_bounds[:, 2], mag_ex)[mask_mem], priors_bounds[9][2], 0.5,
+                                        priors_bounds[7][2])
 
         deprojection_matrix_resolution = 100
 
@@ -413,7 +413,7 @@ def BayesLens_parser(par_file=None, dir=None):
             if i == round(len(r_core[mask_mem]) - 1):
                 print(' ==> 100%\n')
 
-            deprojection_matrix[i, :, 0] = np.linspace(r_core[mask_mem][i] * 10, priors_bounds[3][1],
+            deprojection_matrix[i, :, 0] = np.linspace(r_core[mask_mem][i] * 10, priors_bounds[9][1],
                                                        deprojection_matrix_resolution)
 
             deprojection_matrix[i, :, 1] = deprojection_lenstool(
