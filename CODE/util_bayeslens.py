@@ -80,31 +80,37 @@ def BayesLens_parser(par_file=None, dir=None):
             scaling_vector[0] = np.asarray(h0[2], dtype='float')
             priors_bounds[0, 0] = float(h0[0]) - float(h0[1])
             priors_bounds[0, 1] = float(h0[0]) + float(h0[1])
+            priors_bounds[0, 2] = float(h0[2])
         elif "OMEGA0" in item:
             omega = item.split(': ')[1].split(',')
             scaling_vector[1] = np.asarray(omega[2], dtype='float')
             priors_bounds[1, 0] = float(omega[0]) - float(omega[1])
             priors_bounds[1, 1] = float(omega[0]) + float(omega[1])
+            priors_bounds[1, 2] = float(omega[2])
         elif "LAMBDA" in item:
             lam = item.split(': ')[1].split(',')
             scaling_vector[2] = np.asarray(lam[2], dtype='float')
             priors_bounds[2, 0] = float(lam[0]) - float(lam[1])
             priors_bounds[2, 1] = float(lam[0]) + float(lam[1])
+            priors_bounds[2, 2] = float(lam[2])
         elif "OMEGAK" in item:
             omegak = item.split(': ')[1].split(',')
             scaling_vector[3] = np.asarray(omegak[2], dtype='float')
             priors_bounds[3, 0] = float(omegak[0]) - float(omegak[1])
             priors_bounds[3, 1] = float(omegak[0]) + float(omegak[1])
+            priors_bounds[3, 2] = float(omegak[2])
         elif "WX" in item:
             wx = item.split(': ')[1].split(',')
             scaling_vector[4] = np.asarray(wx[2], dtype='float')
             priors_bounds[4, 0] = float(wx[0]) - float(wx[1])
             priors_bounds[4, 1] = float(wx[0]) + float(wx[1])
+            priors_bounds[4, 2] = float(wx[2])
         elif "WA" in item:
             wa = item.split(': ')[1].split(',')
             scaling_vector[5] = np.asarray(wa[2], dtype='float')
             priors_bounds[5, 0] = float(wa[0]) - float(wa[1])
             priors_bounds[5, 1] = float(wa[0]) + float(wa[1])
+            priors_bounds[5, 2] = float(wa[2])
         elif "M/L_SLOPE" in item:
             priors_bounds[8, 2] = float(item.split(': ')[1])
         elif "REF_RCORE" in item:
