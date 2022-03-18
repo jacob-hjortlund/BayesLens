@@ -40,13 +40,15 @@ if not os.path.exists(cwd + 'support'):
 # RUN THE LensTool parser
 par_vectors, priors_bounds, translation_vector, lenstool_vector, header, image_file, deprojection_matrix, translation_vector_ex, mag_ex = BayesLens_parser(par_file=conf, dir=cwd)
 
+mask_cosmo = (priors_bounds[:6,0] != 0) | (priors_bounds[:6,1] != 0)
 mask_sr = (np.asarray(translation_vector[:, 0], dtype=float) < 1.) & (np.asarray(translation_vector[:, 0], dtype=float) >= 0.)
 mask_halos = (np.asarray(translation_vector[:, 0], dtype=float) < 2.)
 mask_vdgal = (np.asarray(translation_vector[:, 0], dtype=float) >= 2.) & (np.asarray(translation_vector[:, 0], dtype=float) < 3.)
 mask_gal = (np.asarray(translation_vector[:, 0], dtype=float) >= 3.)
 
+print('Cosmological model free-parameters: ' + str(len(par_vectors[:6][mask_cosmo])))
 print('Scaling relation free-parameters: ' + str(len(translation_vector[mask_sr])))
-print('Halo and shear free-parameters: '+ str(len(translation_vector[mask_halos])-4))
+print('Halo and shear free-parameters: '+ str(len(translation_vector[mask_halos])))
 print('Measured galaxy free-parameters: ' + str(len(translation_vector[mask_vdgal])))
 print('No-measured galaxy free-parameters: ' + str(len(translation_vector[mask_gal]))+' (from '+ str(translation_vector[mask_gal][0][0])[2:] + ' to ' + str(translation_vector[mask_gal][len(translation_vector[mask_gal])-1][0])[2:]+')\n')
 
@@ -55,6 +57,8 @@ print('No-measured galaxy free-parameters: ' + str(len(translation_vector[mask_g
 # Read the BayesLens results
 if mode == 'rw':
     bk = (args.BK[0])[:-3]
+    mask_free_par = (priors_bounds[:,0] != 0) | (priors_bounds[:,1] != 0)
+    translation_vector = translation_vector[mask_free_par]
     BayesLens_read_file(cwd, translation_vector, args.wm, args.val[0], args.resume[0], args.chains, str(bk))
 
 # Generate LensTool files
