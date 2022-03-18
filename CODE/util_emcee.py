@@ -20,8 +20,7 @@ from util_likelihoods_priors import partial_posterior, lnposterior
 
 
 
-def walker_init(priors_bounds_w, translation_vector_w, dim_w, n_walkers_w, working_dir, ramdisk, translation_vector_ex,
-                mag_ex, lenstool_vector, header, image_file, deprojection_matrix):
+def walker_init(priors_bounds_w, translation_vector_w, dim_w, n_walkers_w):
     """
     Inizialize walkers positions
 
@@ -206,9 +205,7 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
 
                 backend.reset(n_walkers, dim)
 
-                pos = walker_init(priors_bounds[free_par_mask], translation_vector[free_par_mask], dim, n_walkers, working_dir, ramdisk,
-                                  translation_vector_ex, mag_ex, lenstool_vector, header, image_file,
-                                  deprojection_matrix)
+                pos = walker_init(priors_bounds[free_par_mask], translation_vector[free_par_mask], dim, n_walkers)
 
                 results, sampler_o = run_sampler(n_walkers, dim, lnposterior, priors_bounds, working_dir,
                                                  translation_vector, lenstool_vector, header, image_file, ramdisk,
