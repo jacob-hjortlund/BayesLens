@@ -316,35 +316,65 @@ def priors_cosmo(theta, priors_bounds, translation_vector):
         (np.asarray(translation_vector[:, 0], dtype=float) < 0) &
         (np.asarray(translation_vector[:, 0], dtype=float) > -1)
     )
+
+    # CHECK IF ANY COSMOLOGICAL PARAMS ARE FREE
     mask_cosmo_free = mask_cosmo[mask_free_par]
+
+    if np.count_nonzero(mask_cosmo_free) == 0:
+        lnprior_cosmo = 0.
+
+    # MASK FOR DENSITY PARAMS
     mask_density = (
         (translation_vector[:,1] == 'omega') |
-        (translation_vector[:,1] == 'lambda') |
-        (translation_vector[:,1] == 'omegaK')
+        (translation_vector[:,1] == 'lambda')
     )
-    mask_density_free = mask_density[mask_free_par]
-    mask_density_fixed = mask_density & ~mask_free_par
-    free_densities = theta[mask_density_free]
-    fixed_densities = priors_bounds[mask_density_fixed, 2]
+    mask_density_free = mask_density & mask_free_par
 
+    mask_omegam = translation_vector[:,1] == 'omega'
+    mask_lam = translation_vector[:,1] == 'lambda'
+    mask_omegak = translation_vector[:,1] == 'omegaK'
+
+    # CHECK IF VALUES FALL WITHIN PRIOR
     selection_cosmo = prior_creator(
         theta[mask_cosmo_free],
         priors_bounds[mask_free_par][mask_cosmo_free][:, 0],
         priors_bounds[mask_free_par][mask_cosmo_free][:, 1]
     )
 
-    if np.count_nonzero(mask_cosmo_free) == 0:
-        lnprior_cosmo = 0.
-
-    is_density_physical = (np.sum(free_densities) + np.sum(fixed_densities)) == 1.
-    selection_cosmo *= is_density_physical
-
-    if selection_cosmo:
-        lnprior_cosmo = 0.
-    else:
+    if not selection_cosmo:
         lnprior_cosmo = -np.inf
+    else:
 
-    del selection_cosmo
+        # OmegaM free and OmegaK fixed
+        if (
+            (mask_density_free[mask_omegam]) &
+            (not mask_density_free[mask_lam])
+        ):
+            omegam = theta[mask_omegam[mask_free_par]]
+            omegak = priors_bounds[mask_omegak, 2]
+            omega0 = 1 - omegak
+            priors_bounds[mask_lam, 2] = omega0 - omegam
+            lnprior_cosmo = 0.
+        # Lambda free and OmegaK fixed
+        elif (
+            (not mask_density_free[mask_omegam]) &
+            (mask_density_free[mask_lam])
+        ):
+            lam = theta[mask_lam[mask_free_par]]
+            omegak = priors_bounds[mask_omegak, 2]
+            omega0 = 1 - omegak
+            priors_bounds[mask_omegam, 2] = omega0 - lam
+            lnprior_cosmo = 0.
+        elif (
+            (mask_density_free[mask_omegam]) &
+            (mask_density_free[mask_lam])
+        ):
+            omegam = theta[mask_omegam[mask_free_par]]
+            lam = theta[mask_lam[mask_free_par]]
+            priors_bounds[mask_omegak, 2] = 1 - omegam - lam
+            lnprior_cosmo = 0.
+
+    del selection_cosmo, mask_free_par, mask_cosmo, mask_cosmo_free, mask_density, mask_density_free, mask_omegam, mask_lam, mask_omegak
 
     return lnprior_cosmo
 
@@ -422,6 +452,6 @@ def lnposterior(theta, priors_bounds, working_dir, translation_vector, lenstool_
     like_h = lnlike_halos(theta, working_dir, translation_vector, priors_bounds, lenstool_vector, header, image_file,
                           ramdisk, deprojection_matrix, translation_vector_ex, mag_ex)
 
-    del mask_free_par, mask_cosmo, priors_c, priors_h, part
+    del mask_free_par, priors_c, priors_h, part
 
     return post_1 + like_h
