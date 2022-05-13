@@ -175,7 +175,7 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
     filename = working_dir + bk + '.h5'
     # filename = working_dir + 'BayesLens.h5'
     my_file = Path(filename)
-    backend = emcee.backends.HDFBackend(filename)
+    backend = emcee.backends.HDFBackend(filename, name='0')
 
     print('Number of threads: ' + str(n_threads))
 
@@ -231,8 +231,11 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
 
             if mf[2] == 1:
                 results = median_positions(backend)
-            filename = working_dir + bk + '_' + str(i) + '.h5'
-            backend = emcee.backends.HDFBackend(filename)
+                backend = emcee.backends.HDFBackend(filename, name=f'{i}')
+            else:
+                filename = working_dir + bk + '_' + str(i) + '.h5'
+                backend = emcee.backends.HDFBackend(filename)
+            
             results, sampler_o = run_sampler(n_walkers, dim, lnposterior, priors_bounds, working_dir,
                                              translation_vector, lenstool_vector, header, image_file, ramdisk,
                                              deprojection_matrix, n_threads, backend, n_steps, translation_vector_ex,
