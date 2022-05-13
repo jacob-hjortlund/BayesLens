@@ -138,12 +138,16 @@ def best_chain(dir_working, bk_c, translation_vector_c, dir_out):
 
     del bk_c, translation_vector_c
 
-def median_positions(backend):
+def median_positions(backend, n_walkers):
 
     tau = backend.get_autocorr_time(quiet=True)
+    if np.isnan(tau).any():
+        print('Some autocorelation times are nan. Consider using more steps.')
+        tau[np.isnan(tau)] = np.max(tau[~np.isnan(tau)])
     burnin = int(2 * np.max(tau))
     chains = backend.get_chain(discard=burnin, flat=True)
-    median_pos = np.median(chains, axis=0)
+    median_pos = np.tile(np.median(chains, axis=0), (n_walkers, 1))
+    median_pos +=  1e-4 * np.random.randn(*median_pos.shape)
 
     return median_pos
 
@@ -230,7 +234,7 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
             #        print('File removed: ' + bk + '_' + str(i - 1) + '.h5')
 
             if mf[2] == 1:
-                results = median_positions(backend)
+                results = median_positions(backend, n_walkers)
                 backend = emcee.backends.HDFBackend(filename, name=f'{i}')
             else:
                 filename = working_dir + bk + '_' + str(i) + '.h5'
