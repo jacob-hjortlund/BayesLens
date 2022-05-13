@@ -38,11 +38,11 @@ def BayesLens_parser(par_file=None, dir=None):
     # THIS STRING WILL CONTAIN SEVERAL PARAMETERS OF CONFIGURATION USED IN LensTool INPUT FILE
     header = ''
 
-    scaling_vector = np.zeros(4)
+    scaling_vector = np.zeros(10)
     j = 0
 
     # THIS MATRIX WILL CONTAIN: THE BOUNDARIES, THE MEANS AND STDs, USED FOR CREATE THE PRIORS; THE REFERENCE LUMINOSITY AND CORE RADIUS; AND THE LIST OF GALAXY MAGNITUDES
-    priors_bounds = np.zeros((4, 4), dtype='float')
+    priors_bounds = np.zeros((10, 4), dtype='float')
 
     ### READ INPUT FILE PARAMETERS
     for i, item in enumerate(str_file):
@@ -58,12 +58,8 @@ def BayesLens_parser(par_file=None, dir=None):
             header += '\nimage\n\tmultfile 1 ' + item.split(': ')[1]
             image_file = item.split(': ')[1][:-1]
             header += '\tforme -10\n\tend\n'
-        elif "H0" in item:
-            header += '\ncosmology\n\tH0 ' + item.split(': ')[1]
-        elif "OMEGA" in item:
-            header += '\tomega ' + item.split(': ')[1]
-        elif "LAMBDA" in item:
-            header += '\tlambda ' + item.split(': ')[1] + '\tend\n'
+
+            header += '\ncosmology\n'
             header += '\ngrille\n\tnlens 1000\n'
             header += '\tnlens_opt 0\n'
             header += '\tnombre 256\n\tend\n'
@@ -79,32 +75,68 @@ def BayesLens_parser(par_file=None, dir=None):
             z = item.split(': ')[1]
         elif "N_GAL" in item:
             n_gal = item.split(': ')[1]
+        elif "H0" in item:
+            h0 = item.split(': ')[1].split(',')
+            scaling_vector[0] = np.asarray(h0[2], dtype='float')
+            priors_bounds[0, 0] = float(h0[0])
+            priors_bounds[0, 1] = float(h0[1])
+            priors_bounds[0, 2] = float(h0[2])
+        elif "OMEGA0" in item:
+            omega = item.split(': ')[1].split(',')
+            scaling_vector[1] = np.asarray(omega[2], dtype='float')
+            priors_bounds[1, 0] = float(omega[0])
+            priors_bounds[1, 1] = float(omega[1])
+            priors_bounds[1, 2] = float(omega[2])
+        elif "LAMBDA" in item:
+            lam = item.split(': ')[1].split(',')
+            scaling_vector[2] = np.asarray(lam[2], dtype='float')
+            priors_bounds[2, 0] = float(lam[0])
+            priors_bounds[2, 1] = float(lam[1])
+            priors_bounds[2, 2] = float(lam[2])
+        elif "OMEGAK" in item:
+            omegak = item.split(': ')[1].split(',')
+            scaling_vector[3] = np.asarray(omegak[2], dtype='float')
+            priors_bounds[3, 0] = float(omegak[0])
+            priors_bounds[3, 1] = float(omegak[1])
+            priors_bounds[3, 2] = float(omegak[2])
+        elif "WX" in item:
+            wx = item.split(': ')[1].split(',')
+            scaling_vector[4] = np.asarray(wx[2], dtype='float')
+            priors_bounds[4, 0] = float(wx[0])
+            priors_bounds[4, 1] = float(wx[1])
+            priors_bounds[4, 2] = float(wx[2])
+        elif "WA" in item:
+            wa = item.split(': ')[1].split(',')
+            scaling_vector[5] = np.asarray(wa[2], dtype='float')
+            priors_bounds[5, 0] = float(wa[0])
+            priors_bounds[5, 1] = float(wa[1])
+            priors_bounds[5, 2] = float(wa[2])
         elif "M/L_SLOPE" in item:
-            priors_bounds[2, 2] = float(item.split(': ')[1])
+            priors_bounds[8, 2] = float(item.split(': ')[1])
         elif "REF_RCORE" in item:
-            priors_bounds[3, 2] = float(item.split(': ')[1])
+            priors_bounds[9, 2] = float(item.split(': ')[1])
         elif "VD_SLOPE_SC" in item:
             vdslope_v = item.split(': ')[1].split(',')
-            scaling_vector[0] = np.asarray(vdslope_v[0], dtype='float')
-            priors_bounds[0, 0] = float(vdslope_v[0]) - float(vdslope_v[1])
-            priors_bounds[0, 1] = float(vdslope_v[0]) + float(vdslope_v[1])
+            scaling_vector[6] = np.asarray(vdslope_v[0], dtype='float')
+            priors_bounds[6, 0] = float(vdslope_v[0]) - float(vdslope_v[1])
+            priors_bounds[6, 1] = float(vdslope_v[0]) + float(vdslope_v[1])
         elif "VD_Q_SC" in item:
             vbdq_v = item.split(': ')[1].split(',')
-            scaling_vector[1] = np.asarray(vbdq_v[0], dtype='float')
-            priors_bounds[1, 0] = float(vbdq_v[0]) - float(vbdq_v[1])
-            priors_bounds[1, 1] = float(vbdq_v[0]) + float(vbdq_v[1])
-            priors_bounds[1, 2] = float(vbdq_v[2])
+            scaling_vector[7] = np.asarray(vbdq_v[0], dtype='float')
+            priors_bounds[7, 0] = float(vbdq_v[0]) - float(vbdq_v[1])
+            priors_bounds[7, 1] = float(vbdq_v[0]) + float(vbdq_v[1])
+            priors_bounds[7, 2] = float(vbdq_v[2])
             reference_mag = float(vbdq_v[2])
         elif "VD_SCATTER_SC" in item:
             vdscatter_v = item.split(': ')[1].split(',')
-            scaling_vector[2] = np.asarray(vdscatter_v[0], dtype='float')
-            priors_bounds[2, 0] = float(vdscatter_v[0]) - float(vdscatter_v[1])
-            priors_bounds[2, 1] = float(vdscatter_v[0]) + float(vdscatter_v[1])
+            scaling_vector[8] = np.asarray(vdscatter_v[0], dtype='float')
+            priors_bounds[8, 0] = float(vdscatter_v[0]) - float(vdscatter_v[1])
+            priors_bounds[8, 1] = float(vdscatter_v[0]) + float(vdscatter_v[1])
         elif "CUT_Q_SC" in item:
             cutq_v = item.split(': ')[1].split(',')
-            scaling_vector[3] = np.asarray(cutq_v[0], dtype='float')
-            priors_bounds[3, 0] = float(cutq_v[0]) - float(cutq_v[1])
-            priors_bounds[3, 1] = float(cutq_v[0]) + float(cutq_v[1])
+            scaling_vector[9] = np.asarray(cutq_v[0], dtype='float')
+            priors_bounds[9, 0] = float(cutq_v[0]) - float(cutq_v[1])
+            priors_bounds[9, 1] = float(cutq_v[0]) + float(cutq_v[1])
         elif "HALOS" in item:
             halos_line = i - j + 1
         elif "SHEAR" in item:
@@ -196,7 +228,18 @@ def BayesLens_parser(par_file=None, dir=None):
     par_vectors = scaling_vector
 
     # THIS MATRIX MAP par_vectors DESCRIBING THE TYPE OF PARAMETER FOR EACH ENTRY: 0.x REFER TO SCALING RELATION; 1.x TO HALOS; 2.x TO MEASURED GALAXIES; 3.x TO GALAXIES WITHOUT MEASURED VELOCITY
-    translation_vector = np.array([['0.0', 'vd_slope'], ['0.1', 'vd_q'], ['0.2', 'vd_scatter'], ['0.3', 'cut_q']])
+    translation_vector = np.array([
+        ['-0.1', 'H0'],
+        ['-0.2', 'omega'],
+        ['-0.3', 'lambda'],
+        ['-0.4', 'omegaK'],
+        ['-0.5', 'wX'],
+        ['-0.6', 'wa'],
+        ['0.0', 'vd_slope'],
+        ['0.1', 'vd_q'],
+        ['0.2', 'vd_scatter'],
+        ['0.3', 'cut_q']
+    ])
 
     # THIS MATRIX WILL BE USED TO CREATE LensTool INPUT FILE
     lenstool_vector = np.full((1, 7), '')
@@ -304,7 +347,7 @@ def BayesLens_parser(par_file=None, dir=None):
 
         if h < int(n_gal):
             par_vectors = np.append(par_vectors,
-                                    scaling_func(table_galaxies[h]['MAG'], scaling_vector[1], scaling_vector[0],
+                                    scaling_func(table_galaxies[h]['MAG'], scaling_vector[7], scaling_vector[6],
                                                  reference_mag))
 
             translation_vector = np.vstack((translation_vector, [table_galaxies[h]['label'], 'v_disp']))
@@ -312,8 +355,8 @@ def BayesLens_parser(par_file=None, dir=None):
             R_mean = np.mean(table_vdgalaxies['R'])
 
             priors_bounds = np.vstack((priors_bounds, [
-                scaling_func(table_galaxies[h]['MAG'], scaling_vector[1] - 150, scaling_vector[0], reference_mag),
-                scaling_func(table_galaxies[h]['MAG'], scaling_vector[1] + 150, scaling_vector[0], reference_mag),
+                scaling_func(table_galaxies[h]['MAG'], scaling_vector[7] - 150, scaling_vector[6], reference_mag),
+                scaling_func(table_galaxies[h]['MAG'], scaling_vector[7] + 150, scaling_vector[6], reference_mag),
                 table_galaxies[h]['MAG'], R_mean]))
 
             lenstool_vector = np.vstack(
@@ -338,22 +381,13 @@ def BayesLens_parser(par_file=None, dir=None):
         # HERE WE CREATE A DEPROJECTION MATRIX TO TRANSLATE MEASURED VELOCITY DISPERSION TO LensTool FIDUCIAL VELOCITY DISPERSION
         # GIVEN GALAXIES APERTURES (IN THE INPUT FILE) AND DIFFERENT POSSIBILITIES OF TRUNCATION RADII (see paper).
 
-        # r_core = np.zeros(len(par_vectors))
-        #
-        # mask_mem = (np.asarray(translation_vector[:,0], dtype=float) >= 2.)
-        # r_core[mask_mem] = scaling_func(priors_bounds[:,2][mask_mem],priors_bounds[3][2],0.5,priors_bounds[1][2])
-        #
-        # deprojection_matrix_resolution = 2
-        #
-        # deprojection_matrix = np.zeros((len(r_core[mask_mem]),deprojection_matrix_resolution,2))
-
         r_core = np.zeros(len(np.append(par_vectors, mag_ex)))
 
         translation_vector_matrix = np.vstack((translation_vector, translation_vector_ex))
 
         mask_mem = (np.asarray(translation_vector_matrix[:, 0], dtype=float) >= 2.)
-        r_core[mask_mem] = scaling_func(np.append(priors_bounds[:, 2], mag_ex)[mask_mem], priors_bounds[3][2], 0.5,
-                                        priors_bounds[1][2])
+        r_core[mask_mem] = scaling_func(np.append(priors_bounds[:, 2], mag_ex)[mask_mem], priors_bounds[9][2], 0.5,
+                                        priors_bounds[7][2])
 
         deprojection_matrix_resolution = 100
 
@@ -376,7 +410,7 @@ def BayesLens_parser(par_file=None, dir=None):
             if i == round(len(r_core[mask_mem]) - 1):
                 print(' ==> 100%\n')
 
-            deprojection_matrix[i, :, 0] = np.linspace(r_core[mask_mem][i] * 10, priors_bounds[3][1],
+            deprojection_matrix[i, :, 0] = np.linspace(r_core[mask_mem][i] * 10, priors_bounds[9][1],
                                                        deprojection_matrix_resolution)
 
             deprojection_matrix[i, :, 1] = deprojection_lenstool(

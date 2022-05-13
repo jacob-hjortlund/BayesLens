@@ -13,8 +13,7 @@ from subprocess import Popen, PIPE
 import glob
 import shutil
 
-import matplotlib
-matplotlib.use('TkAgg')
+os.environ['MPLBACKEND'] = 'TKAgg'
 import matplotlib.pyplot as plt
 
 from util_func import randomstring

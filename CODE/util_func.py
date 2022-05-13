@@ -4,37 +4,34 @@
 # ==========================================================
 
 import numpy as np
-from scipy.integrate import dblquad
+from scipy.integrate import dblquad, quad
 import multiprocessing as mp
 import string
 import random
+from math import atan
 
+# TODO: MAKE MORE READABLE
+def integrandone(r, r_core, r_cut, R_new):
+    return( (r_cut * atan(r / r_cut) - r_core * atan(r / r_core)) / ( (1 + r ** 2 / r_core ** 2) * (1 + r ** 2 / r_cut ** 2))) * r
+def integrandtwo(r, r_core, r_cut, R_new):
+    return(r_cut * atan(r / r_cut) - r_core * atan(r / r_core)) / (  r ** 2 * (1 + r ** 2 / r_core ** 2) * (1 + r ** 2 / r_cut ** 2) ) * (r**3 - (r**2 -R_new**2)**1.5)
+def finteg(r_core, r_cut, R_new):
+    return  (quad(integrandone, 0., R_new, epsrel=1e-4, args=(r_core, r_cut, R_new)))[0]*0.3333 +(quad(integrandtwo, R_new, np.inf, epsrel=1e-4, args=(r_core, r_cut, R_new)))[0]*0.3333
+vinteg = np.vectorize(finteg)
 
-
-def integrate(i, r_core, r_cut, R_new):
+def deprojection_lenstool( R: float, r_core: np.ndarray, r_cut: np.ndarray) -> np.ndarray:
     """
-    This function called by 'deprojection_lenstool()' computes the double integral in equation C.16 of Bergamini et al. 2019
+    Computes the projection coefficient in equation C.16 of Bergamini et al. (2019)
+    using 1D integrals (Mamon & Lokas 2005, Agnell oet al. 2014) and vectorisation.
+    Contribution by Adriano Agnello. 
 
-    :param i: array index of cluster  members
-    :param r_core: cluster member (dPIE) core radius
-    :param r_cut: cluster member (dPIE) cut radius
-    :param R_new: projected aperture radius within which cluster member stellar velocity dispersion are measured
-    :return: double integral in equation C.16 of Bergamini et al. 2019
-    """
-    return [i, (dblquad(lambda r, Rad: Rad * (
-                (r_cut[i] * np.arctan(r / r_cut[i]) - r_core[i] * np.arctan(r / r_core[i])) / (
-                    r ** 2 * (1 + r ** 2 / r_core[i] ** 2) * (1 + r ** 2 / r_cut[i] ** 2))) * np.sqrt(
-        r ** 2 - Rad ** 2), 0., R_new[i], lambda r: r, lambda r: np.inf))[0]]
+    Args:
+        r_core (np.ndarray): projected aperture radius within which cluster member stellar velocity dispersion are measured
+        r_cut (np.ndarray): cluster member (dPIE) core radius
+        R (float): cluster member (dPIE) cut radius
 
-
-def deprojection_lenstool(R=None, r_core=None, r_cut=None):
-    """
-    Computes the projection coefficient in equation C.16 of Bergamini et al. 2019
-
-    :param R: projected aperture radius within which cluster member stellar velocity dispersion are measured
-    :param r_core: cluster member (dPIE) core radius
-    :param r_cut: cluster member (dPIE) cut radius
-    :return: projection coefficient in equation C.16 of Bergamini et al. 2019
+    Returns:
+        np.ndarray: projection coefficient in equation C.16 of Bergamini et al. 2019
     """
     R_new = np.asarray(R, dtype=float)
     r_core = np.asarray(r_core, dtype=float)
@@ -43,18 +40,8 @@ def deprojection_lenstool(R=None, r_core=None, r_cut=None):
     c = (4 / np.pi) * ((r_core + r_cut) / (r_core ** 2 * r_cut)) * (
                 1 / (np.sqrt(r_core ** 2 + R_new ** 2) - r_core - np.sqrt(r_cut ** 2 + R_new ** 2) + r_cut))
 
-    results_random = []
-
-    n_core = mp.cpu_count()
-    pool = mp.Pool(processes=(int(n_core)))
-
-    [pool.apply_async(integrate, args=(i, r_core, r_cut, R_new), callback=results_random.append) for i in
-     range(len(R_new))]
-    pool.close()
-    pool.join()
-    results_sorted = np.asarray(sorted(results_random))
-    integral = np.transpose(results_sorted)[1]
-    projection_coeff = np.sqrt(c * integral)
+    tvi=vinteg(r_core, r_cut, R_new)
+    projection_coeff = np.sqrt(c * tvi)
 
     return projection_coeff * np.sqrt(3 / 2)
 

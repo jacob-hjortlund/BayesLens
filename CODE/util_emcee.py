@@ -20,8 +20,7 @@ from util_likelihoods_priors import partial_posterior, lnposterior
 
 
 
-def walker_init(priors_bounds_w, translation_vector_w, dim_w, n_walkers_w, working_dir, ramdisk, translation_vector_ex,
-                mag_ex, lenstool_vector, header, image_file, deprojection_matrix):
+def walker_init(priors_bounds_w, translation_vector_w, dim_w, n_walkers_w):
     """
     Inizialize walkers positions
 
@@ -50,33 +49,28 @@ def walker_init(priors_bounds_w, translation_vector_w, dim_w, n_walkers_w, worki
                 (priors_bounds_w[:, 1])[~mask_vd] - (priors_bounds_w[:, 0])[~mask_vd]) / 2
     init[mask_vd] = priors_bounds_w[:, 0][mask_vd]
 
-    # nll = lambda *args: -lnposterior(*args)
-    # results = op.minimize(nll, init, args=(priors_bounds_w, working_dir, translation_vector_w, lenstool_vector, header, image_file, ramdisk, deprojection_matrix, translation_vector_ex, mag_ex))
-    # print('MAX POSTERIOR: ', results["x"])
-    # pos = [results["x"] + 1e-4 * np.random.randn(len(init)) for i in range(n_walkers_w)]
-
-    # --------------------------------------
-    # --------------------------------------
-    # --------------------------------------
-
     # partial_posterior  MAXIMIZATION
     nll = lambda *args: -partial_posterior(*args)
     results = op.minimize(nll, init, args=(priors_bounds_w, translation_vector_w))
 
     pos = [results["x"] + 1e-4 * np.random.randn(len(init)) for i in range(n_walkers_w)]
-    # pos = np.zeros((n_walkers_w,len(priors_bounds_w[:dim_w, 0])))
 
-    mask_galaxies = (np.asarray(translation_vector_w[:dim_w, 0], dtype=float) >= 2)
-    mask_lkpar = np.zeros(len(translation_vector_w[:dim_w, 0]), dtype='bool')
-    mask_lkpar[0:3] = True
-    mask_lkpriors = mask_galaxies | mask_lkpar
+    mask_halo_cosmo = (
+        (
+            (np.asarray(translation_vector_w[:dim_w, 0], dtype=float) < 0) &
+            (np.asarray(translation_vector_w[:dim_w, 0], dtype=float) > -1)
+        ) |
+        (
+            (np.asarray(translation_vector_w[:dim_w, 0], dtype=float) >= 1) &
+            (np.asarray(translation_vector_w[:dim_w, 0], dtype=float) < 2)
+        )
+    )
 
     for i in range(n_walkers_w):
-        pos[i][~mask_lkpriors] = priors_bounds_w[:dim_w, 0][~mask_lkpriors] + (
-                (priors_bounds_w[:dim_w, 1])[~mask_lkpriors] -
+        pos[i][mask_halo_cosmo] = priors_bounds_w[:dim_w, 0][mask_halo_cosmo] + (
+                (priors_bounds_w[:dim_w, 1])[mask_halo_cosmo] -
                 (priors_bounds_w[:dim_w, 0])[
-                    ~mask_lkpriors]) * np.random.uniform(0., 1., (len((priors_bounds_w[:dim_w, 0])[~mask_lkpriors])))
-        # pos[i][mask_lkpriors] = results["x"][mask_lkpriors] + 1e-4 * np.random.randn(len(results["x"][mask_lkpriors]))
+                    mask_halo_cosmo]) * np.random.uniform(0., 1., (len((priors_bounds_w[:dim_w, 0])[mask_halo_cosmo])))
 
     return pos
 
@@ -111,7 +105,8 @@ def run_sampler(n_walkers_r, dim_r, lnposterior_r, priors_bounds_r, working_dir_
     with mp.Pool(n_threads_r) as pool:
         sampler = emcee.EnsembleSampler(n_walkers_r, dim_r, lnposterior_r, args=(
         priors_bounds_r, working_dir_r, translation_vector_r, lenstool_vector_r, header_r, image_file_r, ramdisk_r,
-        deprojection_matrix_r, translation_vector_ex_r, mag_ex_r), pool=pool, backend=backend_r)
+        deprojection_matrix_r, translation_vector_ex_r, mag_ex_r), pool=pool, backend=backend_r, moves=emcee.moves.StretchMove(a=1.25))
+        #moves=emcee.moves.StretchMove(a=1.75))
 
         results = sampler.run_mcmc(pos_r, n_steps_r, progress=True)
 
@@ -175,6 +170,8 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
 
     print('Number of threads: ' + str(n_threads))
 
+    free_par_mask = (priors_bounds[:,0] != 0) | (priors_bounds[:,1] != 0)
+
     for i in np.arange(mf[0]):
         print('\nRUN: ' + str(i + 1) + ' of ' + str(mf[0]))
         if i == 0:
@@ -199,19 +196,17 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
             ### CREATE A NEW RUN ###
             else:
                 # DIMENSION OF PARAMETER-SPACE
-                dim = len(priors_bounds)
+                dim = len(priors_bounds[free_par_mask])
                 print('\nNumber of free parameters: ', dim)
 
-                # DEFINE THE NUMBER OF WALKERS n_walkers, ENSURE n_walkers >= 2*(N° OF PARAMETERS)+2
-                if n_walkers <= (dim * 2) + 2:
-                    n_walkers = (dim * 2) + 2
+                # DEFINE THE NUMBER OF WALKERS n_walkers, ENSURE n_walkers >= 2*(N° OF PARAMETERS)+2. CHANGED TO 10*N + 2
+                if n_walkers <= (dim * 10) + 2:
+                    n_walkers = (dim * 10) + 2
                 print('\nNumber of walkers: ', n_walkers)
 
                 backend.reset(n_walkers, dim)
 
-                pos = walker_init(priors_bounds, translation_vector, dim, n_walkers, working_dir, ramdisk,
-                                  translation_vector_ex, mag_ex, lenstool_vector, header, image_file,
-                                  deprojection_matrix)
+                pos = walker_init(priors_bounds[free_par_mask], translation_vector[free_par_mask], dim, n_walkers)
 
                 results, sampler_o = run_sampler(n_walkers, dim, lnposterior, priors_bounds, working_dir,
                                                  translation_vector, lenstool_vector, header, image_file, ramdisk,
