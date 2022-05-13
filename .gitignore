@@ -1,4 +1,6 @@
 __pycache__/
 *.sh
 slurm_outputs/
-*.ipynb 
+*.ipynb
+*/*/.ipynb
+*/*/*/.ipynb 

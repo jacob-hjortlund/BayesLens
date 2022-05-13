@@ -365,6 +365,7 @@ def priors_cosmo(theta, priors_bounds, translation_vector):
             omega0 = 1 - omegak
             priors_bounds[mask_omegam, 2] = omega0 - lam
             lnprior_cosmo = 0.
+        # OmegaM and Lambda free
         elif (
             (mask_density_free[mask_omegam]) &
             (mask_density_free[mask_lam])

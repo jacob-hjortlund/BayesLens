@@ -105,7 +105,8 @@ def run_sampler(n_walkers_r, dim_r, lnposterior_r, priors_bounds_r, working_dir_
     with mp.Pool(n_threads_r) as pool:
         sampler = emcee.EnsembleSampler(n_walkers_r, dim_r, lnposterior_r, args=(
         priors_bounds_r, working_dir_r, translation_vector_r, lenstool_vector_r, header_r, image_file_r, ramdisk_r,
-        deprojection_matrix_r, translation_vector_ex_r, mag_ex_r), pool=pool, backend=backend_r)
+        deprojection_matrix_r, translation_vector_ex_r, mag_ex_r), pool=pool, backend=backend_r, moves=emcee.moves.StretchMove(a=1.25))
+        #moves=emcee.moves.StretchMove(a=1.75))
 
         results = sampler.run_mcmc(pos_r, n_steps_r, progress=True)
 
@@ -198,9 +199,9 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
                 dim = len(priors_bounds[free_par_mask])
                 print('\nNumber of free parameters: ', dim)
 
-                # DEFINE THE NUMBER OF WALKERS n_walkers, ENSURE n_walkers >= 2*(N° OF PARAMETERS)+2
-                if n_walkers <= (dim * 2) + 2:
-                    n_walkers = (dim * 2) + 2
+                # DEFINE THE NUMBER OF WALKERS n_walkers, ENSURE n_walkers >= 2*(N° OF PARAMETERS)+2. CHANGED TO 10*N + 2
+                if n_walkers <= (dim * 10) + 2:
+                    n_walkers = (dim * 10) + 2
                 print('\nNumber of walkers: ', n_walkers)
 
                 backend.reset(n_walkers, dim)
