@@ -10,6 +10,8 @@ import os
 import shutil
 from subprocess import Popen, PIPE
 
+from time import time
+
 
 from util_func import randomstring
 from util_lenstool import BayesLens_writer

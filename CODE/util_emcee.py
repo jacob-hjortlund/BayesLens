@@ -104,13 +104,37 @@ def run_sampler(n_walkers_r, dim_r, lnposterior_r, priors_bounds_r, working_dir_
     :return: array with results and sampler object
     """
     # START THE SAMPLER
-    if pool == None:
-        pool = stack.enter_context(mp.Pool(n_threads_r))
-    print('\nSampler started...')
 
-    sampler = emcee.EnsembleSampler(n_walkers_r, dim_r, lnposterior_r, args=(
-    priors_bounds_r, working_dir_r, translation_vector_r, lenstool_vector_r, header_r, image_file_r, ramdisk_r,
-    deprojection_matrix_r, translation_vector_ex_r, mag_ex_r), pool=pool, backend=backend_r, moves=emcee.moves.StretchMove(a=1.25))
+    args = (
+        priors_bounds_r, working_dir_r,
+        translation_vector_r, lenstool_vector_r,
+        header_r, image_file_r, ramdisk_r,
+        deprojection_matrix_r, translation_vector_ex_r, mag_ex_r
+    )
+
+    if pool == None:
+        print(f'Using multiprocessing with {n_threads_r}')
+        pool = stack.enter_context(mp.Pool(n_threads_r))
+        lnposterior = lnposterior_r
+        mp_args = args
+    else:
+        def tmp_lnposterior(theta):
+            
+            lnposterior = lnposterior_r(
+                theta, *args
+            )
+
+            return lnposterior
+        mp_args = None
+        lnposterior = tmp_lnposterior
+
+    print('\nSampler started...')
+    print(f"pool: {pool}")
+
+    sampler = emcee.EnsembleSampler(
+        n_walkers_r, dim_r, lnposterior, args=mp_args,
+        pool=pool, backend=backend_r, moves=emcee.moves.StretchMove(a=1.25)
+    )
     #moves=emcee.moves.StretchMove(a=1.75))
 
     results = sampler.run_mcmc(pos_r, n_steps_r, progress=True)
@@ -175,7 +199,7 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
     my_file = Path(filename)
     backend = emcee.backends.HDFBackend(filename)
 
-    print('Number of threads: ' + str(n_threads))
+    #print('Number of threads: ' + str(n_threads))
 
     free_par_mask = (priors_bounds[:,0] != 0) | (priors_bounds[:,1] != 0)
 
@@ -219,6 +243,8 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
                                                  translation_vector, lenstool_vector, header, image_file, ramdisk,
                                                  deprojection_matrix, n_threads, backend, n_steps,
                                                  translation_vector_ex, mag_ex, pool, stack, pos_r=pos)
+
+                print(results)
 
         else:
             if i > 1:
