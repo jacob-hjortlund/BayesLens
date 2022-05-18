@@ -4,12 +4,13 @@
 # ==========================================================
 
 import numpy as np
-from scipy.integrate import quad
+from scipy.integrate import dblquad, quad
+import multiprocessing as mp
 import string
 import random
-
 from math import atan
 
+# TODO: MAKE MORE READABLE
 def integrandone(r, r_core, r_cut, R_new):
     return( (r_cut * atan(r / r_cut) - r_core * atan(r / r_core)) / ( (1 + r ** 2 / r_core ** 2) * (1 + r ** 2 / r_cut ** 2))) * r
 def integrandtwo(r, r_core, r_cut, R_new):
@@ -18,13 +19,19 @@ def finteg(r_core, r_cut, R_new):
     return  (quad(integrandone, 0., R_new, epsrel=1e-4, args=(r_core, r_cut, R_new)))[0]*0.3333 +(quad(integrandtwo, R_new, np.inf, epsrel=1e-4, args=(r_core, r_cut, R_new)))[0]*0.3333
 vinteg = np.vectorize(finteg)
 
-def deprojection_lenstool(R=None, r_core=None, r_cut=None):
+def deprojection_lenstool( R: float, r_core: np.ndarray, r_cut: np.ndarray) -> np.ndarray:
     """
-    Computes the projection coefficient in equation C.16 of Bergamini et al. (2019) using 1D integrals (Mamon & Lokas 2005, Agnell oet al. 2014) and vectorisation.
-    :param R: projected aperture radius within which cluster member stellar velocity dispersion are measured
-    :param r_core: cluster member (dPIE) core radius
-    :param r_cut: cluster member (dPIE) cut radius
-    :return: projection coefficient in equation C.16 of Bergamini et al. 2019
+    Computes the projection coefficient in equation C.16 of Bergamini et al. (2019)
+    using 1D integrals (Mamon & Lokas 2005, Agnell oet al. 2014) and vectorisation.
+    Contribution by Adriano Agnello. 
+
+    Args:
+        r_core (np.ndarray): projected aperture radius within which cluster member stellar velocity dispersion are measured
+        r_cut (np.ndarray): cluster member (dPIE) core radius
+        R (float): cluster member (dPIE) cut radius
+
+    Returns:
+        np.ndarray: projection coefficient in equation C.16 of Bergamini et al. 2019
     """
     R_new = np.asarray(R, dtype=float)
     r_core = np.asarray(r_core, dtype=float)
