@@ -10,6 +10,7 @@ import multiprocessing as mp
 import emcee
 from pathlib import Path
 import os
+import sys
 
 import matplotlib
 # matplotlib.use('TkAgg')
@@ -77,7 +78,7 @@ def walker_init(priors_bounds_w, translation_vector_w, dim_w, n_walkers_w):
 
 def run_sampler(n_walkers_r, dim_r, lnposterior_r, priors_bounds_r, working_dir_r, translation_vector_r,
                 lenstool_vector_r, header_r, image_file_r, ramdisk_r, deprojection_matrix_r, n_threads_r, backend_r,
-                n_steps_r, translation_vector_ex_r, mag_ex_r, pos_r=None):
+                n_steps_r, translation_vector_ex_r, mag_ex_r, pool=None, stack=None, pos_r=None):
     """
     Run emcee
 
@@ -97,18 +98,46 @@ def run_sampler(n_walkers_r, dim_r, lnposterior_r, priors_bounds_r, working_dir_
     :param n_steps_r: walkers steps
     :param translation_vector_ex_r: see *BayesLens_parser
     :param mag_ex_r: see *BayesLens_parser
+    :param pool: MPI pool to use, defaults to None
+    :param stack: Context manager
     :param pos_r: array with walkers initial positions
     :return: array with results and sampler object
     """
     # START THE SAMPLER
-    print('\nSampler started...')
-    with mp.Pool(n_threads_r) as pool:
-        sampler = emcee.EnsembleSampler(n_walkers_r, dim_r, lnposterior_r, args=(
-        priors_bounds_r, working_dir_r, translation_vector_r, lenstool_vector_r, header_r, image_file_r, ramdisk_r,
-        deprojection_matrix_r, translation_vector_ex_r, mag_ex_r), pool=pool, backend=backend_r, moves=emcee.moves.StretchMove(a=1.25))
-        #moves=emcee.moves.StretchMove(a=1.75))
 
-        results = sampler.run_mcmc(pos_r, n_steps_r, progress=True)
+    args = (
+        priors_bounds_r, working_dir_r,
+        translation_vector_r, lenstool_vector_r,
+        header_r, image_file_r, ramdisk_r,
+        deprojection_matrix_r, translation_vector_ex_r, mag_ex_r
+    )
+
+    if pool == None:
+        print(f'Using multiprocessing with {n_threads_r}')
+        pool = stack.enter_context(mp.Pool(n_threads_r))
+        lnposterior = lnposterior_r
+        mp_args = args
+    else:
+        def tmp_lnposterior(theta):
+            
+            lnposterior = lnposterior_r(
+                theta, *args
+            )
+
+            return lnposterior
+        mp_args = None
+        lnposterior = tmp_lnposterior
+
+    print('\nSampler started...')
+    print(f"pool: {pool}")
+
+    sampler = emcee.EnsembleSampler(
+        n_walkers_r, dim_r, lnposterior, args=mp_args,
+        pool=pool, backend=backend_r, moves=emcee.moves.StretchMove(a=1.25)
+    )
+    #moves=emcee.moves.StretchMove(a=1.75))
+
+    results = sampler.run_mcmc(pos_r, n_steps_r, progress=True)
 
     return results, sampler
 
@@ -141,7 +170,7 @@ def best_chain(dir_working, bk_c, translation_vector_c, dir_out):
 
 def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vector, header, image_file,
                     deprojection_matrix, translation_vector_ex, mag_ex, n_walkers=100, n_steps=500, n_threads=1,
-                    ramdisk='', bk='BayesLens', mf=[1, 0]):
+                    ramdisk='', bk='BayesLens', mf=[1, 0], pool=None, stack=None):
     """
     Run BayesLens optimization
 
@@ -160,6 +189,8 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
     :param ramdisk: path to RAMDISK
     :param bk: name of output BayesLens file
     :param mf: array with two entryes. If mf[0] = N, split BayesLens outputs subsequent N files. If mf[1] = 1, removes previous saved files
+    :param pool: MPI Pool to use, defaults to none
+    :param stack: Context manager
     :return: Save results in .h5 files and plot the acceptance fraction.
     """
     # INIZIALIZE THE FILE WITH THE RESULTS
@@ -168,7 +199,7 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
     my_file = Path(filename)
     backend = emcee.backends.HDFBackend(filename)
 
-    print('Number of threads: ' + str(n_threads))
+    #print('Number of threads: ' + str(n_threads))
 
     free_par_mask = (priors_bounds[:,0] != 0) | (priors_bounds[:,1] != 0)
 
@@ -176,8 +207,8 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
         print('\nRUN: ' + str(i + 1) + ' of ' + str(mf[0]))
         if i == 0:
 
-            os.makedirs(working_dir + 'acc_frac')
-            os.makedirs(working_dir + 'best_par')
+            os.makedirs(working_dir + 'acc_frac', exist_ok=True)
+            os.makedirs(working_dir + 'best_par', exist_ok=True)
 
             ## CONTINUE A PRECEDING RUN APPENDING THE CHAINS TO THE SAME BayesLens.h5 FILE ##
             if my_file.is_file():
@@ -191,7 +222,7 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
                 results, sampler_o = run_sampler(n_walkers, dim, lnposterior, priors_bounds, working_dir,
                                                  translation_vector, lenstool_vector, header, image_file, ramdisk,
                                                  deprojection_matrix, n_threads, backend, n_steps,
-                                                 translation_vector_ex, mag_ex, pos_r=None)
+                                                 translation_vector_ex, mag_ex, pool, stack, pos_r=None)
 
             ### CREATE A NEW RUN ###
             else:
@@ -211,7 +242,9 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
                 results, sampler_o = run_sampler(n_walkers, dim, lnposterior, priors_bounds, working_dir,
                                                  translation_vector, lenstool_vector, header, image_file, ramdisk,
                                                  deprojection_matrix, n_threads, backend, n_steps,
-                                                 translation_vector_ex, mag_ex, pos_r=pos)
+                                                 translation_vector_ex, mag_ex, pool, stack, pos_r=pos)
+
+                print(results)
 
         else:
             if i > 1:
@@ -225,7 +258,7 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
             results, sampler_o = run_sampler(n_walkers, dim, lnposterior, priors_bounds, working_dir,
                                              translation_vector, lenstool_vector, header, image_file, ramdisk,
                                              deprojection_matrix, n_threads, backend, n_steps, translation_vector_ex,
-                                             mag_ex, pos_r=results)
+                                             mag_ex, pool, stack, pos_r=results)
 
         frac_update = sampler_o.acceptance_fraction
 

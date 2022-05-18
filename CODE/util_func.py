@@ -45,7 +45,6 @@ def deprojection_lenstool( R: float, r_core: np.ndarray, r_cut: np.ndarray) -> n
 
     return projection_coeff * np.sqrt(3 / 2)
 
-
 def find_nearest(array, value):
     """
     Return the index of the *array entry closest to *value

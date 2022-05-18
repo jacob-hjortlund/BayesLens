@@ -3,11 +3,16 @@
 # Author: Pietro Bergamini - pietro.bergamini@phd.unipd.it
 # ==========================================================
 
-import numpy as np
 import os
+os.environ["OMP_NUM_THREADS"] = "1"
+import numpy as np
+import sys
 import argparse
 import multiprocessing as mp
 import subprocess
+
+from schwimmbad import MPIPool
+from contextlib import ExitStack
 
 from util_bayeslens import BayesLens_parser
 from util_lenstool import BayesLens_writer
@@ -24,6 +29,7 @@ parser.add_argument('--n_threads', help='Number of threads to be used, default n
 parser.add_argument('--ramdisk', help='Path to the RAM disk, default *ramdisk=current directory', nargs=1, default=[os.getcwd() + '/'], type=str)
 parser.add_argument('--bk', help='Name of the file with results (without extention), default *bk=BayesLens', nargs=1, default=['BayesLens'], type=str)
 parser.add_argument('--mf', help='The first argument specify the number of separated .h5 files that will be created (to reduce the file size). If the second argument is = 1 all .h5 files except the first and the last will be deleted', nargs=2, default=[1,0], type=int)
+parser.add_argument('--mpi', help='Whether to use OpenMPI or multiprocessing, default=False', nargs=1, default=[False], type=str)
 
 args = parser.parse_args()
 mode = args.MODE
@@ -31,34 +37,44 @@ conf = args.CONFIG_FILE
 
 cwd = os.getcwd() + '/'
 
-if not os.path.exists(cwd + 'support'):
-    os.makedirs(cwd + 'support')
+with ExitStack() as stack:
+    if args.mpi[0] == 'True':
+        pool = stack.enter_context(MPIPool(use_dill=True))
+        print('Using MPI for parallelization')
+        if not pool.is_master():
+            pool.wait()
+            sys.exit(0)
+    else:
+        pool = None
 
-# RUN THE LensTool parser
-par_vectors, priors_bounds, translation_vector, lenstool_vector, header, image_file, deprojection_matrix, translation_vector_ex, mag_ex = BayesLens_parser(par_file=conf, dir=cwd)
+    if not os.path.exists(cwd + 'support'):
+        os.makedirs(cwd + 'support')
 
-mask_cosmo = (priors_bounds[:6,0] != 0) | (priors_bounds[:6,1] != 0)
-mask_sr = (np.asarray(translation_vector[:, 0], dtype=float) < 1.) & (np.asarray(translation_vector[:, 0], dtype=float) >= 0.)
-mask_halos = (np.asarray(translation_vector[:, 0], dtype=float) < 2.) & (np.asarray(translation_vector[:, 0], dtype=float) >= 1.)
-mask_vdgal = (np.asarray(translation_vector[:, 0], dtype=float) >= 2.) & (np.asarray(translation_vector[:, 0], dtype=float) < 3.)
-mask_gal = (np.asarray(translation_vector[:, 0], dtype=float) >= 3.)
+    # RUN THE LensTool parser
+    par_vectors, priors_bounds, translation_vector, lenstool_vector, header, image_file, deprojection_matrix, translation_vector_ex, mag_ex = BayesLens_parser(par_file=conf, dir=cwd)
 
-print('Cosmological model free-parameters: ' + str(len(par_vectors[:6][mask_cosmo])))
-print('Scaling relation free-parameters: ' + str(len(translation_vector[mask_sr])))
-print('Halo and shear free-parameters: '+ str(len(translation_vector[mask_halos])))
-print('Measured galaxy free-parameters: ' + str(len(translation_vector[mask_vdgal])))
-print('No-measured galaxy free-parameters: ' + str(len(translation_vector[mask_gal]))+' (from '+ str(translation_vector[mask_gal][0][0])[2:] + ' to ' + str(translation_vector[mask_gal][len(translation_vector[mask_gal])-1][0])[2:]+')\n')
+    mask_cosmo = (priors_bounds[:6,0] != 0) | (priors_bounds[:6,1] != 0)
+    mask_sr = (np.asarray(translation_vector[:, 0], dtype=float) < 1.) & (np.asarray(translation_vector[:, 0], dtype=float) >= 0.)
+    mask_halos = (np.asarray(translation_vector[:, 0], dtype=float) < 2.) & (np.asarray(translation_vector[:, 0], dtype=float) >= 1.)
+    mask_vdgal = (np.asarray(translation_vector[:, 0], dtype=float) >= 2.) & (np.asarray(translation_vector[:, 0], dtype=float) < 3.)
+    mask_gal = (np.asarray(translation_vector[:, 0], dtype=float) >= 3.)
 
-## RUN MODES ##
+    print('Cosmological model free-parameters: ' + str(len(par_vectors[:6][mask_cosmo])))
+    print('Scaling relation free-parameters: ' + str(len(translation_vector[mask_sr])))
+    print('Halo and shear free-parameters: '+ str(len(translation_vector[mask_halos])))
+    print('Measured galaxy free-parameters: ' + str(len(translation_vector[mask_vdgal])))
+    print('No-measured galaxy free-parameters: ' + str(len(translation_vector[mask_gal]))+' (from '+ str(translation_vector[mask_gal][0][0])[2:] + ' to ' + str(translation_vector[mask_gal][len(translation_vector[mask_gal])-1][0])[2:]+')\n')
 
-# LenstTool par file
-if mode == 'ltpar':
-    BayesLens_writer(out_path=cwd + 'test_', par_vector=par_vectors, translation_vector=translation_vector,lenstool_vector=lenstool_vector, header=header, priors_bounds=priors_bounds, deprojection_matrix=deprojection_matrix, translation_vector_ex_w=translation_vector_ex, mag_ex_w = mag_ex)
-    subprocess.Popen(["cat", cwd + 'test_lenstool_in.par'])
+    ## RUN MODES ##
 
-# Run the sampler
-if mode == 'run':
-    BayesLens_emcee(priors_bounds, cwd, translation_vector, lenstool_vector, header,
-                        image_file, deprojection_matrix, translation_vector_ex, mag_ex, n_walkers=int(args.n_walkers[0]), n_steps=int(args.n_steps[0]),
-                        n_threads=int(args.n_threads[0]),ramdisk=str(args.ramdisk[0]), bk=str(args.bk[0]), mf=args.mf)
+    # LenstTool par file
+    if mode == 'ltpar':
+        BayesLens_writer(out_path=cwd + 'test_', par_vector=par_vectors, translation_vector=translation_vector,lenstool_vector=lenstool_vector, header=header, priors_bounds=priors_bounds, deprojection_matrix=deprojection_matrix, translation_vector_ex_w=translation_vector_ex, mag_ex_w = mag_ex)
+        subprocess.Popen(["cat", cwd + 'test_lenstool_in.par'])
+
+    # Run the sampler
+    if mode == 'run':
+        BayesLens_emcee(priors_bounds, cwd, translation_vector, lenstool_vector, header,
+                            image_file, deprojection_matrix, translation_vector_ex, mag_ex, n_walkers=int(args.n_walkers[0]), n_steps=int(args.n_steps[0]),
+                            n_threads=int(args.n_threads[0]),ramdisk=str(args.ramdisk[0]), bk=str(args.bk[0]), mf=args.mf, pool=pool, stack=stack)
 
