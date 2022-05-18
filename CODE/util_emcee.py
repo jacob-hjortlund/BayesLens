@@ -235,8 +235,8 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
 
             if mf[2] == 1:
                 results = median_positions(backend, n_walkers)
-                backend.reset(n_walkers, dim)
-                #backend = emcee.backends.HDFBackend(filename, name=f'{i}')
+                filename = working_dir + bk + '_' + str(i) + '.h5'
+                backend = emcee.backends.HDFBackend(filename)
             else:
                 filename = working_dir + bk + '_' + str(i) + '.h5'
                 backend = emcee.backends.HDFBackend(filename)
