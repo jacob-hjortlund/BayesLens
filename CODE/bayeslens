@@ -28,8 +28,7 @@ parser.add_argument('--n_steps', help='Number of MCMC steps for each walker, def
 parser.add_argument('--n_threads', help='Number of threads to be used, default n_threads=nCPUs.',nargs=1, default=[mp.cpu_count()], type=int)
 parser.add_argument('--ramdisk', help='Path to the RAM disk, default *ramdisk=current directory', nargs=1, default=[os.getcwd() + '/'], type=str)
 parser.add_argument('--bk', help='Name of the file with results (without extention), default *bk=BayesLens', nargs=1, default=['BayesLens'], type=str)
-parser.add_argument('--mf', help='The first argument specify the number of separated .h5 files that will be created (to reduce the file size). If the second argument is = 1 all .h5 files except the first and the last will be deleted', nargs=2, default=[1,0], type=int)
-parser.add_argument('--mpi', help='Whether to use OpenMPI or multiprocessing, default=False', nargs=1, default=[False], type=str)
+parser.add_argument('--mf', help='The first argument specify the number of separated .h5 files that will be created (to reduce the file size). If the second argument is = 1 all .h5 files except the first and the last will be deleted', nargs=3, default=[1,0,1], type=int)
 
 args = parser.parse_args()
 mode = args.MODE
@@ -49,7 +48,6 @@ with ExitStack() as stack:
 
     if not os.path.exists(cwd + 'support'):
         os.makedirs(cwd + 'support')
-
     # RUN THE LensTool parser
     par_vectors, priors_bounds, translation_vector, lenstool_vector, header, image_file, deprojection_matrix, translation_vector_ex, mag_ex = BayesLens_parser(par_file=conf, dir=cwd)
 

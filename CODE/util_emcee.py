@@ -167,10 +167,23 @@ def best_chain(dir_working, bk_c, translation_vector_c, dir_out):
 
     del bk_c, translation_vector_c
 
+def median_positions(backend, n_walkers):
+
+    tau = backend.get_autocorr_time(quiet=True)
+    if np.isnan(tau).any():
+        print('Some autocorelation times are nan. Consider using more steps.')
+        tau[np.isnan(tau)] = np.max(tau[~np.isnan(tau)])
+    burnin = int(2 * np.max(tau))
+    chains = backend.get_chain(discard=burnin, flat=True)
+    median_pos = np.tile(np.median(chains, axis=0), (n_walkers, 1))
+    median_pos +=  1e-4 * np.random.randn(*median_pos.shape)
+
+    return median_pos
+
 
 def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vector, header, image_file,
                     deprojection_matrix, translation_vector_ex, mag_ex, n_walkers=100, n_steps=500, n_threads=1,
-                    ramdisk='', bk='BayesLens', mf=[1, 0], pool=None, stack=None):
+                    ramdisk='', bk='BayesLens', mf=[1, 0, 1], pool=None, stack=None):
     """
     Run BayesLens optimization
 
@@ -197,7 +210,7 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
     filename = working_dir + bk + '.h5'
     # filename = working_dir + 'BayesLens.h5'
     my_file = Path(filename)
-    backend = emcee.backends.HDFBackend(filename)
+    backend = emcee.backends.HDFBackend(filename, name='0')
 
     #print('Number of threads: ' + str(n_threads))
 
@@ -247,14 +260,20 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
                 print(results)
 
         else:
-            if i > 1:
-                best_chain(working_dir, bk + '_' + str(i - 1), translation_vector, working_dir + 'best_par/')
-                if mf[1] == 1:
-                    os.remove(working_dir + bk + '_' + str(i - 1) + '.h5')
-                    print('File removed: ' + bk + '_' + str(i - 1) + '.h5')
+            #if i > 1:
+            #    best_chain(working_dir, bk + '_' + str(i - 1), translation_vector, working_dir + 'best_par/')
+            #    if mf[1] == 1:
+            #        os.remove(working_dir + bk + '_' + str(i - 1) + '.h5')
+            #        print('File removed: ' + bk + '_' + str(i - 1) + '.h5')
 
-            filename = working_dir + bk + '_' + str(i) + '.h5'
-            backend = emcee.backends.HDFBackend(filename)
+            if mf[2] == 1:
+                results = median_positions(backend, n_walkers)
+                filename = working_dir + bk + '_' + str(i) + '.h5'
+                backend = emcee.backends.HDFBackend(filename)
+            else:
+                filename = working_dir + bk + '_' + str(i) + '.h5'
+                backend = emcee.backends.HDFBackend(filename)
+            
             results, sampler_o = run_sampler(n_walkers, dim, lnposterior, priors_bounds, working_dir,
                                              translation_vector, lenstool_vector, header, image_file, ramdisk,
                                              deprojection_matrix, n_threads, backend, n_steps, translation_vector_ex,
