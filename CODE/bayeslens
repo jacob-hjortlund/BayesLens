@@ -29,6 +29,7 @@ parser.add_argument('--n_threads', help='Number of threads to be used, default n
 parser.add_argument('--ramdisk', help='Path to the RAM disk, default *ramdisk=current directory', nargs=1, default=[os.getcwd() + '/'], type=str)
 parser.add_argument('--bk', help='Name of the file with results (without extention), default *bk=BayesLens', nargs=1, default=['BayesLens'], type=str)
 parser.add_argument('--mf', help='The first argument specify the number of separated .h5 files that will be created (to reduce the file size). If the second argument is = 1 all .h5 files except the first and the last will be deleted', nargs=3, default=[1,0,1], type=int)
+parser.add_argument('--mpi', help='Wether to use mpi parallelization. Defaults to False.', nargs=1, default=['False'], type=str)
 
 args = parser.parse_args()
 mode = args.MODE
