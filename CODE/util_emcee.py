@@ -244,8 +244,8 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
                 print('\nNumber of free parameters: ', dim)
 
                 # DEFINE THE NUMBER OF WALKERS n_walkers, ENSURE n_walkers >= 2*(N° OF PARAMETERS)+2. CHANGED TO 10*N + 2
-                if n_walkers <= (dim * 10) + 2:
-                    n_walkers = (dim * 10) + 2
+                if n_walkers <= (dim * 2) + 2:
+                    n_walkers = (dim * 2) + 2
                 print('\nNumber of walkers: ', n_walkers)
 
                 backend.reset(n_walkers, dim)
@@ -256,8 +256,6 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
                                                  translation_vector, lenstool_vector, header, image_file, ramdisk,
                                                  deprojection_matrix, n_threads, backend, n_steps,
                                                  translation_vector_ex, mag_ex, pool, stack, pos_r=pos)
-
-                print(results)
 
         else:
             #if i > 1:
