@@ -131,9 +131,11 @@ def run_sampler(n_walkers_r, dim_r, lnposterior_r, priors_bounds_r, working_dir_
     print('\nSampler started...')
     print(f"pool: {pool}")
 
+    dtype = [("chi2", float), ("drms", float)]
     sampler = emcee.EnsembleSampler(
         n_walkers_r, dim_r, lnposterior, args=mp_args,
-        pool=pool, backend=backend_r, moves=emcee.moves.StretchMove(a=1.25)
+        pool=pool, backend=backend_r, moves=emcee.moves.StretchMove(a=1.25),
+        blobs_dtype=dtype
     )
     #moves=emcee.moves.StretchMove(a=1.75))
 
@@ -210,7 +212,7 @@ def BayesLens_emcee(priors_bounds, working_dir, translation_vector, lenstool_vec
     filename = working_dir + bk + '.h5'
     # filename = working_dir + 'BayesLens.h5'
     my_file = Path(filename)
-    backend = emcee.backends.HDFBackend(filename, name='0')
+    backend = emcee.backends.HDFBackend(filename)
 
     #print('Number of threads: ' + str(n_threads))
 

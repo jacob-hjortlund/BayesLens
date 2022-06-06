@@ -289,7 +289,11 @@ def lnlike_halos(theta, working_dir, translation_vector, priors_bounds, lenstool
         try:
             chires_file = open(path + '/chires/chires0.dat', 'r')
             chires = chires_file.read()
+            print(chires)
+            print('\n')
             lnLH = float(chires.split('log(Likelihood)')[-1])
+            chisq = float(chires.split('chitot')[-1].split('\n')[0])
+            rms = float(chires.split('chimul')[1].strip().split()[5])
             chires_file.close()
         except:
             print('Warning: No chires, ' + ramdisk + random_name)
@@ -301,7 +305,7 @@ def lnlike_halos(theta, working_dir, translation_vector, priors_bounds, lenstool
 
     del mask_free_par, translation_vector_free, random_name, path, chires, chires_file, lenstool, mask_negatives
 
-    return lnLH
+    return lnLH, chisq, rms
 
 def priors_cosmo(theta, priors_bounds, translation_vector):
     """
@@ -452,9 +456,9 @@ def lnposterior(theta, priors_bounds, working_dir, translation_vector, lenstool_
     if not np.isfinite(post_1):
         return -np.inf
 
-    like_h = lnlike_halos(theta, working_dir, translation_vector, priors_bounds, lenstool_vector, header, image_file,
-                          ramdisk, deprojection_matrix, translation_vector_ex, mag_ex)
+    like_h, chisq, rms = lnlike_halos(theta, working_dir, translation_vector, priors_bounds, lenstool_vector, header, image_file,
+                                      ramdisk, deprojection_matrix, translation_vector_ex, mag_ex)
 
     del mask_free_par, priors_c, priors_h, part
 
-    return post_1 + like_h
+    return post_1 + like_h, chisq, rms
