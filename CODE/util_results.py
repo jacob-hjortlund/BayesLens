@@ -49,6 +49,7 @@ def BayesLens_read_file(dir, translation_vector, wm, b, c, par, bk):
             thin = int(1)
             chains = reader.get_chain(discard=burnin, flat=True, thin=thin)
             log_prob_samples = reader.get_log_prob(discard=burnin, flat=True, thin=thin)
+            blobs = reader.get_blobs(discard=burnin, flat=True, thin=thin)
             print("thin: {0}".format(thin))
 
         ### IF AUTOCORRELATION TIMES ARE NOT WELL DETERMINED YOU CAN SPECIFY A BURN-IN BY HAND
@@ -56,10 +57,12 @@ def BayesLens_read_file(dir, translation_vector, wm, b, c, par, bk):
             burnin = int(input('You need more steps for an auto burnin. Specify a burnin value: '))
             chains = reader.get_chain(discard=burnin, flat=True)
             log_prob_samples = reader.get_log_prob(discard=burnin, flat=True)
+            blobs = reader.get_blobs(discard=burnin, flat=True, thin=thin)
 
         print("burn-in: {0}".format(burnin))
         print("flat chain shape: {0}".format(chains.shape))
         print("flat log prob shape: {0}".format(log_prob_samples.shape))
+        print("flat blob shape: {0}".format(blobs.shape))
 
         chains_tot = np.concatenate((log_prob_samples.reshape(1, len(log_prob_samples)).T, chains), axis=1)
 
@@ -67,6 +70,7 @@ def BayesLens_read_file(dir, translation_vector, wm, b, c, par, bk):
 
         np.save(dir + 'support/chains_burnin_' + str(burnin) + '.npy', chains_tot)
         np.save(dir + 'support/chains.npy', chains_2)
+        np.save(dir + 'support/blobs.npy', blobs)
         print('\nChains without burnin saved in support/chains_burnin_' + str(burnin) + '.npy')
         print('Use the option --c to resume that chains')
 

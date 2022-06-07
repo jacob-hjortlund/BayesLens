@@ -252,6 +252,8 @@ def lnlike_halos(theta, working_dir, translation_vector, priors_bounds, lenstool
 
     if len(theta[mask_negatives]) > 0:
         lnLH = -np.inf
+        chisq = -np.inf
+        rms = -np.inf
         random_name = ''
         path = ''
         chires = ''
@@ -289,8 +291,6 @@ def lnlike_halos(theta, working_dir, translation_vector, priors_bounds, lenstool
         try:
             chires_file = open(path + '/chires/chires0.dat', 'r')
             chires = chires_file.read()
-            print(chires)
-            print('\n')
             lnLH = float(chires.split('log(Likelihood)')[-1])
             chisq = float(chires.split('chitot')[-1].split('\n')[0])
             rms = float(chires.split('chimul')[1].strip().split()[5])
@@ -298,6 +298,8 @@ def lnlike_halos(theta, working_dir, translation_vector, priors_bounds, lenstool
         except:
             print('Warning: No chires, ' + ramdisk + random_name)
             lnLH = -np.inf
+            chisq = -np.inf
+            rms = -np.inf
             chires = ''
             chires_file = ''
 
@@ -439,14 +441,14 @@ def lnposterior(theta, priors_bounds, working_dir, translation_vector, lenstool_
     )
     
     if not np.isfinite(priors_c):
-        return -np.inf
+        return -np.inf, -np.inf, -np.inf
 
     # HALOS PRIOR
     mask_free_par = (priors_bounds[:,0] != 0) | (priors_bounds[:,1] != 0)
     priors_h = priors_halos(theta, priors_bounds[mask_free_par], translation_vector[mask_free_par])
 
     if not np.isfinite(priors_h):
-        return -np.inf
+        return -np.inf, -np.inf, -np.inf
 
     part = partial_posterior(theta, priors_bounds[mask_free_par], translation_vector[mask_free_par])
 
@@ -454,7 +456,7 @@ def lnposterior(theta, priors_bounds, working_dir, translation_vector, lenstool_
 
     # LENSTOOL LIKELIHOOD
     if not np.isfinite(post_1):
-        return -np.inf
+        return -np.inf, -np.inf, -np.inf
 
     like_h, chisq, rms = lnlike_halos(theta, working_dir, translation_vector, priors_bounds, lenstool_vector, header, image_file,
                                       ramdisk, deprojection_matrix, translation_vector_ex, mag_ex)

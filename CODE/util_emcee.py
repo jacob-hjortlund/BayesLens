@@ -131,11 +131,9 @@ def run_sampler(n_walkers_r, dim_r, lnposterior_r, priors_bounds_r, working_dir_
     print('\nSampler started...')
     print(f"pool: {pool}")
 
-    dtype = [("chi2", float), ("drms", float)]
     sampler = emcee.EnsembleSampler(
         n_walkers_r, dim_r, lnposterior, args=mp_args,
-        pool=pool, backend=backend_r, moves=emcee.moves.StretchMove(a=1.25),
-        blobs_dtype=dtype
+        pool=pool, backend=backend_r, moves=emcee.moves.StretchMove(a=1.25)
     )
     #moves=emcee.moves.StretchMove(a=1.75))
 
